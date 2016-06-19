@@ -1,0 +1,35 @@
+<!DOCTYPE HTML>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Virtuoso</title>
+
+    <style>
+      #container {
+          background-color: silver;
+          display: block;
+          width: 80%;
+          margin: 0 auto;
+          padding: 3% 5%;
+      }
+
+      .childobj {
+          display: inline;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <input type="file" id="file"/>
+    <div id="piano">
+    </div>
+
+    <script src="audio-wrapper.js" type="text/javascript" defer=""></script>
+    <script src="midi-wrapper.js" type="text/javascript" defer=""></script>
+    <script src="virtuoso.js" type="text/javascript" defer=""></script>
+  </body>
+</html>
