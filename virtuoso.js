@@ -72,8 +72,8 @@ function keyUpdate(newKey){
 
 function timeUpdate(newTime){
   time = newTime;
-  objTimeNumerator = time.numerator.toString();
-  objTimeDenominator = time.denominator.toString();
+  objTimeNumerator.innerHTML = time.numerator.toString();
+  objTimeDenominator.innerHTML = time.denominator.toString();
 }
 
 function init(){
