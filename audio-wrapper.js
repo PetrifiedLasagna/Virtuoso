@@ -103,6 +103,18 @@ class AudioEngine {
     return audioCtx.createBufferSource();
   }
 
+  newOscillator(){
+    return audioCtx.createOscillator();
+  }
+
+  newGain(){
+    return audioCtx.createGain();
+  }
+
+  getDestination(){
+    return audioCtx.destination;
+  }
+
   // Play data that is in buffer
   play(delay, endCallback){
     if(this.buffer){
