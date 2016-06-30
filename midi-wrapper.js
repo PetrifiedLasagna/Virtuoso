@@ -5,10 +5,20 @@ var midiEvent = function(){
 
   // type 0 - midi event, type 1 - system exlusive, type 2 - meta event
   this.type = 0;
+  this.track = 0;
   this.id = 0;
 
   this.channel = 0;
   this.data = null;
+};
+
+midiEvent.prototype.copy = function(srcE){
+  this.delta = srcE.delta;
+  this.type = srcE.type;
+  this.track = srcE.track;
+  this.id = srcE.id;
+  this.channel = srcE.channel;
+  this.data = srcE.data.slice();
 };
 
 var midiTrack = function(){
@@ -30,6 +40,61 @@ var midiFile = function(){
   this.header = new midiHeader();
   this.tracks = [];
 };
+
+var songTimeSignature = function(){
+  this.denominator = 4; //Denominator
+  this.numerator = 4; //Numerator
+};
+
+var songKeySignature = function(){
+  this.key = 0; //(-6)-(6)
+  this.mi = 0;   //major(0)/minor(1)
+};
+
+var songInfo = function(){
+  this.tempo = 500000; //microseconds 500,000
+  this.tempoBPM = 120; //BPM
+  this.timeSig = new songTimeSignature();
+  this.keySig = new songKeySignature();
+};
+
+var midiNote = function(){
+  this.note = 0;
+  this.channel = 0;
+
+  this.startTime = 0;
+  this.endTime = -1;
+  this.playing = true;
+
+  this.oscillator = null;
+  this.gain = null;
+};
+
+midiNote.prototype.makeCopy = function(){
+  var copy = new midiNote();
+  copy.note = this.note;
+  copy.channel = this.channel;
+
+  copy.startTime = this.startTime;
+  copy.playing = this.playing;
+
+  copy.oscillator = this.oscillator;
+  copy.gain = this.gain;
+
+  return copy;
+};
+
+function microToMinute(tMicro){
+  return tMicro / 60000000; //60,000,000
+}
+
+function minuteToMicro(tMinute){
+  return tMinute * 60000000; //60,000,000
+}
+
+function timePerBeat_BPM(tMicro){
+  return Math.round(60000000 / tMicro);
+}
 
 function readIdentifier(pointer, data){
   var id = "";
@@ -102,17 +167,107 @@ function log(str, backgroundColor = "#FFFFFF"){
   document.body.appendChild(p);
 }
 
+var note_frequencies = null;
+var midiEvents = [
+  0x80, //Note off
+  0x90, //Note on
+  0xB0  //Controller
+];
+
+var metaEvents = [
+  0x51, //Tempo
+  0x58, //Time signature
+  0x59, //Key signature
+  //0x2F, //End of Track
+];
+
+function sortEvents(events){
+  var newArr = events.slice();
+  var n = 0;
+  var small_Ind = 0;
+
+  for(var i = 1; i < newArr.length && n < newArr.length - 1; i++){
+    if(newArr[i].delta < newArr[small_Ind].delta) {
+      small_Ind = i;
+    }
+
+    if(i == newArr.length - 1){
+      var a = newArr[n];
+      var b = newArr[small_Ind];
+
+      if( !(n == small_Ind || a.delta == b.delta) ){
+        newArr[n] = b;
+        newArr[small_Ind] = a;
+      }
+
+      n++;
+      i = n+1;
+      small_Ind = i;
+    }
+  }
+
+  return newArr;
+}
+
+function freeMemory(arr){
+  var emptyInd = -1;
+  for(var i = 0; i < arr.length; i++){
+    if(arr[i] == null){
+      if(emptyInd == -1){emptyInd = i;}
+    } else {
+      emptyInd = -1;
+    }
+  }
+
+  if(emptyInd != -1){
+    arr.splice(emptyInd);
+  }
+}
+
 class MidiHandler {
-  constructor() {
-    this.channels = [];
+  constructor(audioEngine) {
+    //this.channels = [];
+    this.playing = false;
     this.currentTime = 0;
-    this.tempo = 0;
+    this.realTime = 0;
+    this.songPointer = 0;
+
+    this.info = new songInfo();
     this.masterVolume = 100;
 
     this.currentMidi = null;
+    this.usableEvents = null;
+
+    this.engine = audioEngine;
+
+    this.gainNotes = new Array();
+    this.activeNotes = new Array();
+
+    this.gain = audioEngine.newGain();
+    this.gain.gain.value = 0.01;
+    this.gain.connect(audioEngine.getDestination());
+
+    if(!note_frequencies){
+      note_frequencies = [128];
+
+      var a = 440;
+      for (var x = 0; x < 128; ++x)
+      {
+         note_frequencies[x] = (a / 32) * Math.pow(2, (x - 9) / 12);
+      }
+    }
+
+    this.tempoCallback = null;
+    this.keyCallback = null;
+    this.timeCallback = null;
+
+    setInterval(this.volFalloff.bind(this), 50);
   }
 
   loadMidi(file){
+    this.usableEvents = null;
+    this.clearBuffers();
+
     var data = new Uint8Array(file.target.result);
     var midi = new midiFile();
 
@@ -126,7 +281,7 @@ class MidiHandler {
       var id = readIdentifier(pointer, data);
       var chunkLength = readInt(pointer, 4, data);
 
-      log("Chunk Type: " + id + ", Length " + chunkLength, "#999999");
+      //log("Chunk Type: " + id + ", Length " + chunkLength, "#999999");
 
       switch (id) {
         case "MThd":
@@ -138,17 +293,20 @@ class MidiHandler {
             var format = readInt(pointer, 2, data);
             head.divisions.format = format & 0x8000;
             head.divisions.value = format;
+            head.divisions.true_value = format;
 
-            log("head properties", "#33FF33");
+            //log("head properties", "#33FF33");
 
-            log("- Midi Format: " + head.format);
-            log("- Midi Number of Tracks: " + head.numTracks);
-            log("- Timing Format: " + head.divisions.format);
+            //log("- Midi Format: " + head.format);
+            //log("- Midi Number of Tracks: " + head.numTracks);
+            //log("- Timing Format: " + head.divisions.format);
             if(head.divisions.format){
-              log("-- Frames Per Second: " + Math.abs(head.divisions.value >> 8));
-              log("-- Ticks Per Frame: " + head.divisions.value & 0x00FF);
+              head.divisions.true_value = (((head.divisions.value >> 8) ^ 0xF) + 1) * (head.divisions.value & 0x00FF);
+              //log("-- Frames Per Second: " + ((head.divisions.value >> 8) ^ 0xF) + 1);
+              //log("-- Ticks Per Frame: " + head.divisions.value & 0x00FF);
+              //log("-- Total Frames: " + head.divisions.true_value);
             } else {
-              log("-- Ticks Per Quarter Note: " + head.divisions.value);
+              //log("-- Ticks Per Quarter Note: " + head.divisions.value);
             }
 
             midi.header = head;
@@ -225,19 +383,20 @@ class MidiHandler {
                 break;
             }
 
-            log("Event Type: " + stype, "#33FF33");
-            log("- Event ID(Hex): " + event.id.toString(16));
+            //log("Event Type: " + stype, "#33FF33");
+            //log("- Delta: " + event.delta);
+            //log("- Event ID(Hex): " + event.id.toString(16));
             if(event.type == 0){
-              log("- Event Channel: " + event.channel);
+              //log("- Event Channel: " + event.channel);
             }
-            log("- Event Data(Hex): ");
+            //log("- Event Data(Hex): ");
             var datastr = "";
             event.data.forEach(function(val){
               var tmp = val.toString(16);
               if(tmp.length < 2){tmp = "0" + tmp;}
               datastr += tmp + ", ";
             });
-            log("-- " + datastr);
+            //log("-- " + datastr);
 
             track.events.push(event);
           }
@@ -251,5 +410,298 @@ class MidiHandler {
           pointer.pos += chunkLength;
       }
     }
+
+    this.currentMidi = midi;
+    this.parseEvents(midi);
+  }
+
+  parseEvents(midiData){
+    var t = midiData.header.numTracks;
+    var events = [];
+
+    for(var track = 0; track < t; track++){
+      var parsedTime = 0;
+      var eventP = midiData.tracks[track].events;
+      //console.log(midiData.tracks[track]);
+
+      for(var e = 0; e < eventP.length; e++){
+        parsedTime += eventP[e].delta;
+        var type = eventP[e].type;
+
+        if(type == 0){
+          var id = eventP[e].id & 0xF0;
+
+          for(var i = 0; i < midiEvents.length; i++){
+            if(id == midiEvents[i]){
+              var newEvent = new midiEvent();
+              newEvent.copy(eventP[e]);
+              newEvent.delta = parsedTime;
+              newEvent.track = track;
+
+              events.push(newEvent);
+              break;
+            }
+          }
+        } else if (type == 2){
+          var id = eventP[e].data[0];
+
+          for(var i = 0; i < metaEvents.length; i++){
+            if(id == metaEvents[i]){
+              var newEvent = new midiEvent();
+              newEvent.copy(eventP[e]);
+              newEvent.delta = parsedTime;
+              newEvent.track = track;
+
+              events.push(newEvent);
+              break;
+            }
+          }
+
+        }
+
+      }
+    }
+
+    //console.log(events);
+    //console.log(sortEvents(events));
+    this.usableEvents = sortEvents(events);
+
+    for(var i = 0; this.usableEvents.length; i++){
+      var type = this.usableEvents[i].type;
+      if(type == 2){
+        this.processEvent(this.usableEvents[i]);
+      } else {
+        break;
+      }
+    }
+
+    //console.log(this.usableEvents);
+  }
+
+  play(){
+    if(this.usableEvents != null && !this.playing){
+      this.clearBuffers();
+      this.realTime = this.engine.getTime() + 2;
+      this.playing = true;
+
+      //console.log("hello");
+      this.playCallback();
+    }
+  }
+
+  playCallback(){
+    if(this.playing){
+      var now = this.currentTime;
+      var realNow = this.realTime;
+      var nextTime = Math.round(now + this.info.tempoBPM / 60 * this.currentMidi.header.divisions.true_value);
+      //var nextTime = now + this.info.tempoBPM;
+      var ind = this.songPointer;
+      var notes = this.activeNotes;
+      //var gains = this.gainNotes;
+
+      //console.log("Next Time: " + nextTime);
+
+      while(now <= nextTime){
+        if(ind < this.usableEvents.length){
+          //this.info.tempoBPM = 60;
+          var e = this.usableEvents[ind];
+          var id;
+          var eType = e.type;
+
+          realNow += (e.delta - now) / this.currentMidi.header.divisions.true_value / (this.info.tempoBPM / 60);
+          //console.log(realNow);
+          //console.log(ind);
+          //console.log(now);
+          now = e.delta;
+          this.processEvent(e, realNow);
+          ind++;
+        } else {
+          //console.log("ended");
+          //setTimeout(this.clearBuffers.bind(this), (realNow - this.engine.getTime()) * 1000);
+          this.playing = false;
+          setTimeout(this.clearBuffers.bind(this), (realNow - this.engine.getTime() + 1) * 1000);
+          ind = 0;
+          now = 0;
+          break;
+        }
+      }
+
+      this.currentTime = now;
+      this.realTime = realNow;
+      this.songPointer = ind;
+      setTimeout(this.playCallback.bind(this), (realNow - this.engine.getTime()) * 0.8 * 1000);
+    }
+  }
+
+  processEvent(e, time){
+    var eType = e.type;
+    var data = e.data;
+    var id;
+
+    switch (eType) {
+      case 0:
+        id = e.id & 0xF0;
+        //console.log(id.toString(16));
+
+        switch (id) {
+          case midiEvents[0]:
+            this.noteOff(readInt({pos: 0}, 1, data), e.channel, time);
+            break;
+
+          case midiEvents[1]:
+            this.noteOn(readInt({pos: 0}, 1, data), e.channel, time);
+            break;
+        }
+
+        break;
+
+
+      case 2:
+        id = e.data[0];
+
+        switch(id){
+          case metaEvents[0]: //tempo
+            this.tempoChange(readInt({pos: 1}, 3, data), time);
+            break;
+
+          case metaEvents[1]: //time sig
+            this.timeChange(data[1], Math.pow(2, data[2]), time);
+            break;
+
+          case metaEvents[2]: //key sig
+            this.keyChange(data[1], data[2]);
+            break;
+        }
+        break;
+    }
+  }
+
+  noteOff(key, channel, time){
+    var notes = this.activeNotes;
+    for(var i = 0; i < notes.length; i++){
+      var tmp = notes[i];
+
+      if(tmp){
+        if(tmp.note == key && tmp.channel == channel && tmp.playing){
+          notes[i].playing = false;
+          notes[i].endTime = time;
+          notes[i].oscillator.stop(time);
+          break;
+        }
+      }
+
+    }
+
+  }
+
+  noteOn(key, channel, time){
+    var note = new midiNote();
+    var self = this;
+
+    note.note = key;
+    note.channel = channel;
+    note.startTime = time;
+
+    var oscillator = this.engine.newOscillator();
+    var gain = this.engine.newGain();
+    oscillator.frequency.value = note_frequencies[key];
+    oscillator.type = "square";
+
+    oscillator.connect(gain);
+    //oscillator.connect(this.engine.getDestination());
+    gain.gain.value = 1.0;
+    gain.connect(this.gain);
+
+    //oscillator.index = [obj.length, gains.length];
+
+    oscillator.start(time);
+    note.oscillator = oscillator;
+    note.gain = gain;
+
+    oscillator.lookup = [key, channel];
+    oscillator.onended = function(){
+      var vals = this.lookup;
+      for(var i = 0; i < self.activeNotes.length; i++){
+        var tmp = self.activeNotes[i];
+        if(tmp){
+          if(tmp.note == vals[0] && tmp.channel == vals[1]){
+            self.activeNotes.splice(i, 1);
+            break;
+          }
+        }
+      }
+      //freeMemory(notes);
+    };
+
+    self.activeNotes.push(note);
+  }
+
+  tempoChange(tMicro, time, call = true){
+    var newTempo = timePerBeat_BPM(tMicro);
+
+    this.info.tempo = tMicro;
+    this.info.tempoBPM = newTempo;
+
+    if(call && this.tempoCallback){
+      if(!(time === undefined)){
+        setTimeout(this.tempoCallback, time - this.engine.getTime(), newTempo);
+      } else {
+        this.tempoCallback(newTempo);
+      }
+    }
+  }
+
+  keyChange(key, mi, time, call = true){
+    var newKey = new songKeySignature();
+    newKey.key = key;
+    newKey.mi = mi;
+
+    this.info.keySig = newKey;
+
+    if(call && this.keyCallback){
+      if(!(time === undefined)){
+        setTimeout(this.keyCallback, time - this.engine.getTime(), newKey);
+      } else {
+        this.keyCallback(newKey);
+      }
+    }
+  }
+
+  timeChange(numerator, denominator, time, call = true){
+    var newTime = new songTimeSignature();
+    newTime.denominator = denominator;
+    newTime.numerator = numerator;
+
+    this.info.timeSig = newTime;
+
+    if(call && this.timeCallback){
+      if(!(time === undefined)){
+        setTimeout(this.timeCallback, time - this.engine.getTime(), newTime);
+      } else {
+        this.timeCallback(newTime);
+      }
+    }
+  }
+
+  volFalloff(){
+    var t = this.engine.getTime();
+    var notes = this.activeNotes;
+    for(var i = 0; i < notes.length; i++){
+      if(notes[i]){
+        var vol = Math.max(0, 1 - (t - notes[i].startTime) / 4);
+        notes[i].gain.gain.value = vol;
+        //console.log(notes[i].gain.gain.value);
+      }
+    }
+  }
+
+  clearBuffers(){
+    //this.gainNotes = new Array();
+    for(var i = 0; i < this.activeNotes.length; i++){
+      if(this.activeNotes[i]){
+        this.activeNotes[i].oscillator.stop();
+      }
+    }
+    this.activeNotes.length = 0;
   }
 }
