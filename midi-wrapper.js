@@ -160,7 +160,10 @@ function readMetaEvent(pointer, data){
   return bytes;
 }
 
-function log(str, backgroundColor = "#FFFFFF"){
+function log(str, backgroundColor){
+  if(backgroundColor === undefined){
+    backgroundColor = "#FFFFFF";
+  }
   var p = document.createElement("P");
   p.innerHTML = str;
   p.style.backgroundColor = backgroundColor;
@@ -636,7 +639,10 @@ class MidiHandler {
     self.activeNotes.push(note);
   }
 
-  tempoChange(tMicro, time, call = true){
+  tempoChange(tMicro, time, call){
+    if(call === undefined){
+      call = true;
+    }
     var newTempo = timePerBeat_BPM(tMicro);
 
     this.info.tempo = tMicro;
@@ -651,7 +657,11 @@ class MidiHandler {
     }
   }
 
-  keyChange(key, mi, time, call = true){
+  keyChange(key, mi, time, call){
+    if(call === undefined){
+      call = true;
+    }
+
     var newKey = new songKeySignature();
     newKey.key = key;
     newKey.mi = mi;
@@ -667,7 +677,11 @@ class MidiHandler {
     }
   }
 
-  timeChange(numerator, denominator, time, call = true){
+  timeChange(numerator, denominator, time, call){
+    if(call === undefined){
+      call = true;
+    }
+    
     var newTime = new songTimeSignature();
     newTime.denominator = denominator;
     newTime.numerator = numerator;
