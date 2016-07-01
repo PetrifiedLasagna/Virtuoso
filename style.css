@@ -65,9 +65,6 @@
 }
 
 #piano {
-  display: block;
+  display: table;
   margin: 0 auto;
-  width: intrinsic;           /* Safari/WebKit uses a non-standard name */
-  width: -moz-max-content;    /* Firefox/Gecko */
-  width: -webkit-max-content;
 }
