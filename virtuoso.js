@@ -3,6 +3,9 @@
 var midiController;
 var audioController;
 
+var objDialogContainer;
+var objDialog;
+
 var objFile;
 var objPlaybtn;
 
@@ -43,6 +46,31 @@ function draw(){
   prevPressed = pressed;
 
   requestAnimationFrame(draw);
+}
+
+function hideDialogue(){
+  objDialogContainer.style.visibility = "hidden";
+}
+
+function displayDialogue(content, button){
+  if(button === undefined){
+    button = false;
+  }
+  objDialog.innerHTML = content;
+
+  if(button){
+    var btn = document.createElement("input");
+    //btn.className = "rounded";
+    btn.type = "button";
+    btn.style.float = "right";
+    btn.value = button;
+
+    btn.onclick = hideDialogue;
+
+    objDialog.appendChild(btn);
+  }
+
+  objDialogContainer.style.visibility = "visible";
 }
 
 var tempo = 120;
@@ -92,6 +120,16 @@ function init(){
   objTimeDenominator = document.getElementById("time-denominator");
   objKey = document.getElementById("key-signature");
 
+  objDialogContainer = document.createElement("div");
+  objDialogContainer.style.visibility = "hidden";
+  objDialogContainer.className = "dialogueContainer";
+
+  objDialog = document.createElement("div");
+  objDialog.className = "dialogue";
+
+  objDialogContainer.appendChild(objDialog);
+  document.body.appendChild(objDialogContainer);
+
   //"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"
   objPianoKeys = [];
   var keyType = 0;
@@ -115,10 +153,19 @@ function init(){
   objFile.value = "";
 
   objFile.onchange = function(event){
+    displayDialogue("<p>Your file is being processed</p><br/><img class='rounded' src='images/loading2.gif'></img>")
     var reader = new FileReader();
     var file = event.target.files[0];
 
-    reader.onload = midiController.loadMidi.bind(midiController);
+    reader.onload = function(raw){
+      var msg = midiController.loadMidi(raw);
+      console.log(msg);
+      if(msg != ""){
+        displayDialogue("<p>There was a problem loading your file!</p><br/><p>" + msg + "</p>", "Ok");
+      } else {
+        hideDialogue();
+      }
+    };
 
     reader.readAsArrayBuffer(file);
   }
