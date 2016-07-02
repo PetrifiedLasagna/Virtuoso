@@ -153,7 +153,7 @@ function init(){
   objFile.value = "";
 
   objFile.onchange = function(event){
-    displayDialogue("<p>Your file is being processed</p><br/><img class='rounded' src='images/loading2.gif'></img>")
+    displayDialogue("<p>Your file is being processed</p><br/><img class='rounded' src='../images/loading2.gif'></img>")
     var reader = new FileReader();
     var file = event.target.files[0];
 
