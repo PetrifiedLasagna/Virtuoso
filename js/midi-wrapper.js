@@ -185,34 +185,6 @@ var metaEvents = [
   //0x2F, //End of Track
 ];
 
-function sortEvents(events){
-  var newArr = events.slice();
-  var n = 0;
-  var small_Ind = 0;
-
-  for(var i = 1; i < newArr.length && n < newArr.length - 1; i++){
-    if(newArr[i].delta < newArr[small_Ind].delta) {
-      small_Ind = i;
-    }
-
-    if(i == newArr.length - 1){
-      var a = newArr[n];
-      var b = newArr[small_Ind];
-
-      if( !(n == small_Ind || a.delta == b.delta) ){
-        newArr[n] = b;
-        newArr[small_Ind] = a;
-      }
-
-      n++;
-      i = n+1;
-      small_Ind = i;
-    }
-  }
-
-  return newArr;
-}
-
 function freeMemory(arr){
   var emptyInd = -1;
   for(var i = 0; i < arr.length; i++){
@@ -283,7 +255,7 @@ class MidiHandler {
       var id = readIdentifier(pointer, data);
       var chunkLength = readInt(pointer, 4, data);
 
-      //console.log("Chunk Type: " + id + ", Length " + chunkLength, "#999999");
+      console.log("Chunk Type: " + id + ", Length " + chunkLength);
 
       if(id == "MThd"){
         if(!foundHead) {
@@ -297,18 +269,18 @@ class MidiHandler {
             head.divisions.value = format;
             head.divisions.true_value = format;
 
-            //console.log("head properties", "#33FF33");
+            console.log("head properties");
 
-            //console.log("- Midi Format: " + head.format);
-            //console.log("- Midi Number of Tracks: " + head.numTracks);
-            //console.log("- Timing Format: " + head.divisions.format);
+            console.log("- Midi Format: " + head.format);
+            console.log("- Midi Number of Tracks: " + head.numTracks);
+            console.log("- Timing Format: " + head.divisions.format);
             if(head.divisions.format){
               head.divisions.true_value = (((head.divisions.value >> 8) ^ 0xF) + 1) * (head.divisions.value & 0x00FF);
-              //console.log("-- Frames Per Second: " + ((head.divisions.value >> 8) ^ 0xF) + 1);
-              //console.log("-- Ticks Per Frame: " + head.divisions.value & 0x00FF);
-              //console.log("-- Total Frames: " + head.divisions.true_value);
+              console.log("-- Frames Per Second: " + ((head.divisions.value >> 8) ^ 0xF) + 1);
+              console.log("-- Ticks Per Frame: " + head.divisions.value & 0x00FF);
+              console.log("-- Total Frames: " + head.divisions.true_value);
             } else {
-              //console.log("-- Ticks Per Quarter Note: " + head.divisions.value);
+              console.log("-- Ticks Per Quarter Note: " + head.divisions.value);
             }
 
             midi.header = head;
@@ -475,7 +447,10 @@ class MidiHandler {
 
     //console.log(events);
     //console.log(sortEvents(events));
-    this.usableEvents = sortEvents(events);
+    //this.usableEvents = sortEvents(events);
+    this.usableEvents.sort(function(a, b){
+      return a.delta - b.delta;
+    });
 
     for(var i = 0; this.usableEvents.length; i++){
       var type = this.usableEvents[i].type;
@@ -486,7 +461,7 @@ class MidiHandler {
       }
     }
 
-    //console.log(this.usableEvents);
+    console.log(this.usableEvents);
   }
 
   play(){
