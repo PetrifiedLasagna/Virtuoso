@@ -62,7 +62,7 @@ var midiNote = function(){
   this.note = 0;
   this.channel = 0;
 
-  this.startTime = 0;
+  this.startTime = -1;
   this.endTime = -1;
   this.playing = true;
 
@@ -448,9 +448,11 @@ class MidiHandler {
     //console.log(events);
     //console.log(sortEvents(events));
     //this.usableEvents = sortEvents(events);
-    this.usableEvents.sort(function(a, b){
+    events.sort(function(a, b){
       return a.delta - b.delta;
     });
+
+    this.usableEvents = events;
 
     for(var i = 0; this.usableEvents.length; i++){
       var type = this.usableEvents[i].type;
