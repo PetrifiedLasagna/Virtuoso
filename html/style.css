@@ -62,18 +62,35 @@ img {
   z-index: 1;
 }
 
+.note {
+  visibility: visible;
+  position: absolute;
+  width: 92%;
+  border: solid 2px;
+}
+
+.note-path{
+  visibility: hidden;
+  height: 100%;
+}
+
 #piano-container {
   width: 100%;
   padding: 0;
   margin: 0;
-  margin-top: 20%;
+  /*margin-top: 30%;*/
 
   white-space: nowrap;
 }
 
 #piano {
-  display: table;
-  margin: 0 auto;
+  text-align: center;
+}
+
+#note-container {
+  height: 400px;
+  width: 100%;
+  text-align: center;
 }
 
 .rounded {
