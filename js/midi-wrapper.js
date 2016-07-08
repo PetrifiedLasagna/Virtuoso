@@ -61,6 +61,7 @@ var songInfo = function(){
 var midiNote = function(){
   this.note = 0;
   this.channel = 0;
+  this.track = 0;
 
   this.startTime = -1;
   this.endTime = -1;
@@ -533,11 +534,11 @@ class MidiHandler {
 
         switch (id) {
           case midiEvents[0]:
-            this.noteOff(readInt({pos: 0}, 1, data), e.channel, time);
+            this.noteOff(readInt({pos: 0}, 1, data), e.track, e.channel, time);
             break;
 
           case midiEvents[1]:
-            this.noteOn(readInt({pos: 0}, 1, data), e.channel, time);
+            this.noteOn(readInt({pos: 0}, 1, data), e.track, e.channel, time);
             break;
         }
 
@@ -564,13 +565,13 @@ class MidiHandler {
     }
   }
 
-  noteOff(key, channel, time){
+  noteOff(key, track, channel, time){
     var notes = this.activeNotes;
     for(var i = 0; i < notes.length; i++){
       var tmp = notes[i];
 
       if(tmp){
-        if(tmp.note == key && tmp.channel == channel && tmp.playing){
+        if(tmp.note == key && tmp.track == track && tmp.channel == channel && tmp.playing){
           notes[i].playing = false;
           notes[i].endTime = time;
           notes[i].oscillator.stop(time);
@@ -582,11 +583,12 @@ class MidiHandler {
 
   }
 
-  noteOn(key, channel, time){
+  noteOn(key, track, channel, time){
     var note = new midiNote();
     var self = this;
 
     note.note = key;
+    note.track = track;
     note.channel = channel;
     note.startTime = time;
 
