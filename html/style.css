@@ -1,3 +1,7 @@
+body {
+  margin: 0;
+}
+
 img {
   width: 80%;
 }
@@ -8,6 +12,11 @@ img {
     width: 80%;
     margin: 0 auto;
     padding: 3% 5%;
+}
+
+#Application {
+  width: 100%;
+  height: auto;
 }
 
 .childobj {
@@ -75,6 +84,7 @@ img {
 }
 
 #piano-container {
+  display: none;
   width: 100%;
   padding: 0;
   margin: 0;
