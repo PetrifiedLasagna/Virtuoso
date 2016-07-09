@@ -8,6 +8,10 @@ function getString(color){
   return "rgb(" + color.r + "," + color.g + "," + color.b + ")";
 }
 
+function colorEquals(col1, col2){
+  return col1.r == col2.r && col1.g == col2.g && col1.b == col2.b;
+}
+
 class GfxEngine{
   constructor(id){
     this.canvas = document.getElementById(id);
