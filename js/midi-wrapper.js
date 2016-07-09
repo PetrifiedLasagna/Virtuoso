@@ -60,6 +60,7 @@ var songInfo = function(){
 
 var midiNote = function(){
   this.note = 0;
+  this.velocity = 0;
   this.channel = 0;
   this.track = 0;
 
@@ -477,12 +478,13 @@ class MidiHandler {
     }
   }
 
-  playCallback(){
+  playCallback(lookAhead){
     if(this.playing){
       var now = this.currentTime;
       var realNow = this.realTime;
-      var nextTime = Math.round(now + this.info.tempoBPM / 60 * this.currentMidi.header.divisions.true_value);
+      //var nextTime = Math.round(now + this.info.tempoBPM / 60 * this.currentMidi.header.divisions.true_value);
       //var nextTime = now + this.info.tempoBPM;
+      var nextTime = Math.round(now + lookAhead * this.currentMidi.header.divisions.true_value);
       var ind = this.songPointer;
       var notes = this.activeNotes;
       //var gains = this.gainNotes;
@@ -517,7 +519,7 @@ class MidiHandler {
       this.currentTime = now;
       this.realTime = realNow;
       this.songPointer = ind;
-      setTimeout(this.playCallback.bind(this), (realNow - this.engine.getTime()) * 0.8 * 1000);
+      //setTimeout(this.playCallback.bind(this), (realNow - this.engine.getTime()) * 0.2 * 1000);
     }
   }
 
@@ -583,48 +585,50 @@ class MidiHandler {
   noteOn(key, velocity, track, channel, time){
     if(velocity == 0){
       this.noteOff(key, track, channel, time);
-    }
-    var note = new midiNote();
-    var self = this;
+    } else {
+      var note = new midiNote();
+      var self = this;
 
-    note.playing = true;
-    note.note = key;
-    note.track = track;
-    note.channel = channel;
-    note.startTime = time;
+      note.playing = true;
+      note.note = key;
+      note.velocity = velocity / 127;
+      note.track = track;
+      note.channel = channel;
+      note.startTime = time;
 
-    var oscillator = this.engine.newOscillator();
-    var gain = this.engine.newGain();
-    oscillator.frequency.value = note_frequencies[key];
-    oscillator.type = "square";
+      var oscillator = this.engine.newOscillator();
+      var gain = this.engine.newGain();
+      oscillator.frequency.value = note_frequencies[key];
+      oscillator.type = "square";
 
-    oscillator.connect(gain);
-    //oscillator.connect(this.engine.getDestination());
-    gain.gain.value = 1.0;
-    gain.connect(this.gain);
+      oscillator.connect(gain);
+      //oscillator.connect(this.engine.getDestination());
+      gain.gain.value = note.velocity;
+      gain.connect(this.gain);
 
-    //oscillator.index = [obj.length, gains.length];
+      //oscillator.index = [obj.length, gains.length];
 
-    oscillator.start(time);
-    note.oscillator = oscillator;
-    note.gain = gain;
+      oscillator.start(time);
+      note.oscillator = oscillator;
+      note.gain = gain;
 
-    oscillator.lookup = [key, channel];
-    oscillator.onended = function(){
-      var vals = this.lookup;
-      for(var i = 0; i < self.activeNotes.length; i++){
-        var tmp = self.activeNotes[i];
-        if(tmp){
-          if(tmp.note == vals[0] && tmp.channel == vals[1]){
-            self.activeNotes.splice(i, 1);
-            break;
+      oscillator.lookup = [key, channel];
+      oscillator.onended = function(){
+        var vals = this.lookup;
+        for(var i = 0; i < self.activeNotes.length; i++){
+          var tmp = self.activeNotes[i];
+          if(tmp){
+            if(tmp.note == vals[0] && tmp.channel == vals[1]){
+              self.activeNotes.splice(i, 1);
+              break;
+            }
           }
         }
-      }
-      //freeMemory(notes);
-    };
+        //freeMemory(notes);
+      };
 
-    self.activeNotes.push(note);
+      self.activeNotes.push(note);
+    }
   }
 
   tempoChange(tMicro, time, call){
@@ -695,18 +699,17 @@ class MidiHandler {
     var notes = this.activeNotes;
     for(var i = 0; i < notes.length; i++){
       if(notes[i]){
-        var vol = Math.max(0, 1 - (t - notes[i].startTime) / 4);
-        notes[i].gain.gain.value = vol;
-        //console.log(notes[i].gain.gain.value);
+        var vol = 1 - (t - notes[i].startTime) / 4;
+        notes[i].gain.gain.value = Math.max(0, notes[i].velocity * vol);
       }
     }
   }
 
   clearBuffers(){
-    //this.gainNotes = new Array();
-    for(var i = 0; i < this.activeNotes.length; i++){
-      if(this.activeNotes[i]){
-        this.activeNotes[i].oscillator.stop();
+    var notes = this.activeNotes.slice();
+    for(var i = 0; i < notes.length; i++){
+      if(notes[i]){
+        notes[i].oscillator.stop();
       }
     }
     this.activeNotes.length = 0;
