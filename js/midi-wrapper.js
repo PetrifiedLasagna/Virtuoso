@@ -658,7 +658,6 @@ class MidiHandler {
       newKey.key = key;
     }
 
-    console.log(newKey.key);
     newKey.mi = mi;
 
     this.info.keySig = newKey;
