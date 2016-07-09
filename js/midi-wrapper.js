@@ -256,7 +256,7 @@ class MidiHandler {
       var id = readIdentifier(pointer, data);
       var chunkLength = readInt(pointer, 4, data);
 
-      console.log("Chunk Type: " + id + ", Length " + chunkLength);
+      //console.log("Chunk Type: " + id + ", Length " + chunkLength);
 
       if(id == "MThd"){
         if(!foundHead) {
@@ -270,18 +270,18 @@ class MidiHandler {
             head.divisions.value = format;
             head.divisions.true_value = format;
 
-            console.log("head properties");
+            //console.log("head properties");
 
-            console.log("- Midi Format: " + head.format);
-            console.log("- Midi Number of Tracks: " + head.numTracks);
-            console.log("- Timing Format: " + head.divisions.format);
+            //console.log("- Midi Format: " + head.format);
+            //console.log("- Midi Number of Tracks: " + head.numTracks);
+            //console.log("- Timing Format: " + head.divisions.format);
             if(head.divisions.format){
               head.divisions.true_value = (((head.divisions.value >> 8) ^ 0xF) + 1) * (head.divisions.value & 0x00FF);
-              console.log("-- Frames Per Second: " + ((head.divisions.value >> 8) ^ 0xF) + 1);
-              console.log("-- Ticks Per Frame: " + head.divisions.value & 0x00FF);
-              console.log("-- Total Frames: " + head.divisions.true_value);
+              //console.log("-- Frames Per Second: " + ((head.divisions.value >> 8) ^ 0xF) + 1);
+              //console.log("-- Ticks Per Frame: " + head.divisions.value & 0x00FF);
+              //console.log("-- Total Frames: " + head.divisions.true_value);
             } else {
-              console.log("-- Ticks Per Quarter Note: " + head.divisions.value);
+              //console.log("-- Ticks Per Quarter Note: " + head.divisions.value);
             }
 
             midi.header = head;
@@ -464,7 +464,6 @@ class MidiHandler {
       }
     }
 
-    console.log(this.usableEvents);
   }
 
   play(){
