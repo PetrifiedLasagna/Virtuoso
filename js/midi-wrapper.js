@@ -530,7 +530,6 @@ class MidiHandler {
     switch (eType) {
       case 0:
         id = e.id & 0xF0;
-        //console.log(id.toString(16));
 
         switch (id) {
           case midiEvents[0]:
@@ -538,12 +537,11 @@ class MidiHandler {
             break;
 
           case midiEvents[1]:
-            this.noteOn(readInt({pos: 0}, 1, data), e.track, e.channel, time);
+            this.noteOn(readInt({pos: 0}, 1, data), readInt({pos: 1}, 1, data), e.track, e.channel, time);
             break;
         }
 
         break;
-
 
       case 2:
         id = e.data[0];
@@ -583,10 +581,14 @@ class MidiHandler {
 
   }
 
-  noteOn(key, track, channel, time){
+  noteOn(key, velocity, track, channel, time){
+    if(velocity == 0){
+      this.noteOff(key, track, channel, time);
+    }
     var note = new midiNote();
     var self = this;
 
+    note.playing = true;
     note.note = key;
     note.track = track;
     note.channel = channel;
@@ -650,7 +652,13 @@ class MidiHandler {
     }
 
     var newKey = new songKeySignature();
-    newKey.key = key;
+    if(key & 0x80){
+      newKey.key = -((key & 0xF ^ 0xF) + 1);
+    } else {
+      newKey.key = key;
+    }
+
+    console.log(newKey.key);
     newKey.mi = mi;
 
     this.info.keySig = newKey;
