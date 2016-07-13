@@ -66,6 +66,18 @@ class GfxEngine{
     this.contextB.globalCompositeOperation = mode;
   }
 
+  createImageData(width, height){
+    return this.contextB.createImageData(width, height);
+  }
+
+  putImage(image, x, y){
+    this.contextB.putImageData(image, x, y);
+  }
+
+  toUrl(){
+    return this.buffer.toDataURL();
+  }
+
   swapBuffers(){
     this.context.clearRect(0, 0, this.width, this.height);
     this.context.drawImage(this.buffer, 0, 0);
