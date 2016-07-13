@@ -1,10 +1,10 @@
 # **Welcome to the repo for Virtuoso**
 
-Virtuoso the program designed to take the pain away from recording midi files. The latest update is currently capable of loading a midi file, and playing it from beginning to end. It will graphically show which keys are being pressed, although it currently does not display unique colors depending on the layer. Also, it can only play sound using a square wave, but I will get it setup to load samples in a future update.
+With virtuoso your computer can help you learn your favorite songs on piano for free! Using the very portable midi format, you can quickly load songs and see their playback on a keyboard. You don't even have to have an internet connection to use this. You can download it and fire it up with your favorite browser whenever you feel like practicing.
 
 ## **Version Information**
 
-**Current Version:** 0.0.8 Alpha
+**Current Version:** 0.1.0 Beta
 
 Live Demo: http://notebookinc.byethost15.com/js/virtuoso/
 
@@ -21,12 +21,30 @@ Planned Features:
 
 ## **Download and Setup**
 
-Getting this setup on a server or on your computer is a fairly straightforward process.
+Getting this setup on a server or on your computer is a fairly straightforward process. For servers with PHP installed, copy the files from the **bin/server** folder to any directory. You can modify "virtioso.php" to suit the needs of your server. The HTML file assumes that the document header has not been closed and you may need to make adjustments to suit your needs. For example, you could use the following.
 
-1. Go to releases
-2. Download the latest release
-3. Copy the files to the place you want to store them
-4. open virtuoso.html
+```php
+<?php
+
+ob_start();
+
+include("Path to header");
+include("Path to virtuoso.html");
+$content = ob_get_contents();
+
+ob_end_clean();
+
+if(substr_count($content, "</head>") > 1){
+  $content = substr_replace($content, "", strpos($content, "</head>"), strlen("</head>"));
+}
+
+/*
+Rest of file
+*/
+?>
+```
+
+Additionally, the **bin/local** folder contains the files organized in a way that is suitable for use on personal computers and servers without PHP. All you need to do is put the files in a directory of your choosing and then open **virtuoso.html**.
 
 ## **License**
 
