@@ -1,22 +1,35 @@
 body {
   margin: 0;
+  background-color: #FFFFFF;
 }
 
-img {
+img.fit {
   width: 80%;
 }
 
-#container {
-    background-color: silver;
-    display: block;
-    width: 80%;
-    margin: 0 auto;
-    padding: 3% 5%;
+#app-container {
+  text-align: center;
+  background-color: inherit;
+}
+
+#gfx-container {
+  text-align: center;
+  background-color: inherit;
 }
 
 #Application {
-  width: 100%;
+  width: 99%;
   height: auto;
+  margin: 0 auto;
+}
+
+#gfx-gradient {
+  position: absolute;
+  width: 100%;
+  height: 10%;
+
+  background-color: inherit;
+  overflow: hidden;
 }
 
 .childobj {
@@ -28,9 +41,23 @@ img {
 
 .meta{
   display: inline-block;
-  width: 32%;
-  font-size: 2em;
+  margin: 0 2%;
+  /*font-size: 2em;*/
   font-weight: bold;
+}
+
+.block-justify {
+  text-align: justify;
+  width: 94%;
+  margin: 0 auto;
+}
+
+.block-justify::after {
+  content: "";
+  display: inline-block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .container{
@@ -39,6 +66,7 @@ img {
 
 .text{
   text-align: center;
+  margin: 0;
 }
 
 #time-numerator{
@@ -48,59 +76,6 @@ img {
 }
 
 #time-denominator{
-}
-
-.key{
-  position: relative;
-  vertical-align: text-top;
-  display: inline-block;
-
-  border: solid thin black;
-  background-color: white;
-
-  width: 15px;
-  height: 100px;
-  z-index: 0;
-}
-
-.key1{
-  background-color: black;
-  width: 10px;
-  height: 65px;
-  margin: 0 -6px;
-  z-index: 1;
-}
-
-.note {
-  visibility: visible;
-  position: absolute;
-  width: 92%;
-  border: solid 2px;
-}
-
-.note-path{
-  visibility: hidden;
-  height: 100%;
-}
-
-#piano-container {
-  display: none;
-  width: 100%;
-  padding: 0;
-  margin: 0;
-  /*margin-top: 30%;*/
-
-  white-space: nowrap;
-}
-
-#piano {
-  text-align: center;
-}
-
-#note-container {
-  height: 400px;
-  width: 100%;
-  text-align: center;
 }
 
 .rounded {
