@@ -72,6 +72,13 @@ var midiNote = function(){
   this.gain = null;
 };
 
+var midiSample = function(){
+  this.buffer = null;
+  this.loopStart = 0;
+  this.loopEnd = 0;
+  this.homeKey = 0;
+}
+
 midiNote.prototype.makeCopy = function(){
   var copy = new midiNote();
   copy.note = this.note;
@@ -222,7 +229,7 @@ class MidiHandler {
     this.activeNotes = new Array();
 
     this.gain = audioEngine.newGain();
-    this.gain.gain.value = 0.01;
+    this.gain.gain.value = 0.02;
     this.gain.connect(audioEngine.getDestination());
 
     if(!note_frequencies){
@@ -509,7 +516,6 @@ class MidiHandler {
           //console.log("ended");
           //setTimeout(this.clearBuffers.bind(this), (realNow - this.engine.getTime()) * 1000);
           this.playing = false;
-          setTimeout(this.clearBuffers.bind(this), (realNow - this.engine.getTime() + 1) * 1000);
           ind = 0;
           now = 0;
           break;
@@ -696,11 +702,15 @@ class MidiHandler {
 
   volFalloff(){
     var t = this.engine.getTime();
-    var notes = this.activeNotes;
+    var notes = this.activeNotes.slice();
     for(var i = 0; i < notes.length; i++){
       if(notes[i]){
         var vol = 1 - (t - notes[i].startTime) / 4;
         notes[i].gain.gain.value = Math.max(0, notes[i].velocity * vol);
+        if(notes[i].gain.gain.value <= 0 && !this.playing){
+          notes[i].oscillator.stop(t + 2.1);
+          note[i].endTime = t + 2.1;
+        }
       }
     }
   }
