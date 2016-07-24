@@ -209,6 +209,47 @@ function freeMemory(arr){
   }
 }
 
+//type: 0 = sine, 1 = square, 2 = saw, 3 = triangle
+function generateWave(frequency, sampleRate, type, length){
+  if(type === undefined){
+    type = 0;
+  }
+  if(length === undefined){
+    length = Math.round(sampleRate / frequency);
+  }
+  var buffer = new Float32Array(length);
+  for(var i = 0; i < length; i++){
+    switch (type) {
+      default:
+      case 0:
+      case 1:
+        buffer[i] = Math.sin(2 * Math.PI * frequency * i / sampleRate);
+        if(type == 1){
+          buffer[i] = Math.sign(buffer[i]);
+        }
+        break;
+
+      case 2:
+        buffer[i] = (2 * frequency * i / sampleRate + 1) % 2 - 1;
+        break;
+
+      case 3:
+        buffer[i] = Math.abs((4 * frequency * i - 1) % 4 - 2) - 1;
+        break;
+
+    }
+  }
+
+  return {rate: sampleRate, buff: buffer};
+}
+
+var sampleKey = function(buffer, homeKey, loopStart, loopEnd){
+  this.buffer = buffer;
+  this.homeKey = homeKey;
+  this.loopStart = loopStart;
+  this.loopEnd = loopEnd;
+};
+
 class MidiHandler {
   constructor(audioEngine) {
     //this.channels = [];
@@ -242,11 +283,48 @@ class MidiHandler {
       }
     }
 
+    this.audioSample = null;
+    this.speedTable = null; //Pre calculated playback speed percentages
+    var sample = generateWave(note_frequencies[69], 44100, 1);
+    this.setSample(sample.buff, 69, 0, 0, 1, sample.rate);
+
     this.tempoCallback = null;
     this.keyCallback = null;
     this.timeCallback = null;
 
     setInterval(this.volFalloff.bind(this), 50);
+  }
+
+  setSample(buffer, homeKey, loopStart, loopEnd, numChannels, sampleRate){
+    if(loopStart === undefined){
+      loopStart = 0;
+    }
+    if(loopEnd === undefined){
+      loopEnd = 0;
+    }
+
+    var sample;
+    if(Object.prototype.toString.call(buffer) === "[object AudioBuffer]"){
+      sample = buffer;
+    } else {
+      sample = this.engine.newBuffer(numChannels, buffer.length, sampleRate);
+      if(numChannels > 1){
+        for(var i = 0; i < numChannels; i++){
+          sample.copyToChannel(buffer[i], i);
+        }
+      } else {
+        sample.copyToChannel(buffer, 0);
+      }
+    }
+
+    var table = [];
+    var homeKeyFreq = note_frequencies[homeKey];
+    for(var i = 0; i < 128; i++){
+      table.push(note_frequencies[i] / homeKeyFreq);
+    }
+
+    this.speedTable = table;
+    this.audioSample = new sampleKey(sample, homeKey, loopStart, loopEnd);
   }
 
   loadMidi(file){
@@ -576,10 +654,10 @@ class MidiHandler {
       var tmp = notes[i];
 
       if(tmp){
-        if(tmp.note == key && tmp.track == track && tmp.channel == channel && tmp.playing){
-          notes[i].playing = false;
-          notes[i].endTime = time;
-          notes[i].oscillator.stop(time);
+        if(tmp.note == key && tmp.track == track && tmp.channel == channel && tmp.playing == true){
+          tmp.playing = false;
+          tmp.endTime = time;
+          tmp.oscillator.stop(time);
           break;
         }
       }
@@ -602,29 +680,55 @@ class MidiHandler {
       note.channel = channel;
       note.startTime = time;
 
-      var oscillator = this.engine.newOscillator();
+      //var oscillator = this.engine.newOscillator();
+      var sound = this.engine.newBufferSource();
+      sound.loop = true;
+      sound.buffer = this.audioSample.buffer;
+      sound.loopStart = this.audioSample.loopStart;
+      sound.loopEnd = this.audioSample.loopEnd;
+      sound.playbackRate.value = this.speedTable[key];
       var gain = this.engine.newGain();
-      oscillator.frequency.value = note_frequencies[key];
-      oscillator.type = "square";
+      //oscillator.frequency.value = note_frequencies[key];
+      //oscillator.type = "square";
 
-      oscillator.connect(gain);
+      //oscillator.connect(gain);
       //oscillator.connect(this.engine.getDestination());
+      sound.connect(gain);
       gain.gain.value = note.velocity;
       gain.connect(this.gain);
 
       //oscillator.index = [obj.length, gains.length];
 
-      oscillator.start(time);
-      note.oscillator = oscillator;
+      //oscillator.start(time);
+      //note.oscillator = oscillator;
+      sound.start(time);
+      note.oscillator = sound;
       note.gain = gain;
 
-      oscillator.lookup = [key, channel];
+      //oscillator.lookup = [key, channel];
+      /*
       oscillator.onended = function(){
         var vals = this.lookup;
         for(var i = 0; i < self.activeNotes.length; i++){
           var tmp = self.activeNotes[i];
           if(tmp){
             if(tmp.note == vals[0] && tmp.channel == vals[1]){
+              self.activeNotes.splice(i, 1);
+              break;
+            }
+          }
+        }
+        //freeMemory(notes);
+      };
+      */
+
+      //sound.lookup = [key, channel, time];
+      sound.onended = function(){
+        var vals = this.lookup;
+        for(var i = 0; i < self.activeNotes.length; i++){
+          var tmp = self.activeNotes[i];
+          if(tmp){
+            if(tmp.oscillator === this){
               self.activeNotes.splice(i, 1);
               break;
             }
@@ -702,14 +806,20 @@ class MidiHandler {
 
   volFalloff(){
     var t = this.engine.getTime();
-    var notes = this.activeNotes.slice();
+    var notes = this.activeNotes;
     for(var i = 0; i < notes.length; i++){
-      if(notes[i]){
-        var vol = 1 - (t - notes[i].startTime) / 4;
-        notes[i].gain.gain.value = Math.max(0, notes[i].velocity * vol);
-        if(notes[i].gain.gain.value <= 0 && !this.playing){
-          notes[i].oscillator.stop(t + 2.1);
-          note[i].endTime = t + 2.1;
+      var note = notes[i];
+      if(note){
+        var vol = note.gain.gain.value;
+        if(vol > 0){
+          vol = Math.max(0, note.velocity * (1 - (t - note.startTime) / 4) );
+          note.gain.gain.value = vol;
+          if(this.playing == false){
+            if(vol <= 0){
+              note.oscillator.stop(t + 2.1);
+              note.endTime = t + 2.1;
+            }
+          }
         }
       }
     }
