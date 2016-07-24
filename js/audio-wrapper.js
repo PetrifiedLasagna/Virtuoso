@@ -95,6 +95,10 @@ class AudioEngine {
     }
   }
 
+  decodeFile(audioData, callback){
+    audioCtx.decodeAudioData(audioData, callback);
+  }
+
   newBuffer(numChannels, length, sampleRate){
     return audioCtx.createBuffer(numChannels, length, sampleRate);
   }
