@@ -130,8 +130,12 @@ function draw(cTime){
   gfxController.swapBuffers();
   requestAnimationFrame(draw);
   if(midiController.playing){
-    midiController.playCallback((cTime - pTime) / 1000);
-    cTime = pTime;
+    if(Math.floor(cTime - tempo/60) > pTime){
+      midiController.playCallback((cTime - pTime) / 1000);
+      pTime = cTime;
+    }
+  } else {
+    pTime = cTime
   }
 }
 
@@ -191,6 +195,25 @@ function timeUpdate(newTime){
   objTimeDenominator.innerHTML = time.denominator.toString();
 }
 
+function loadPresetDCall(buffer){
+  midiController.setSample(buffer, 69, 0.01138, 0);
+}
+
+//Loads a preset which must be fetched with XMLRequest
+function loadPresetRCall(e){
+  var data = this.response;
+  audioController.decodeFile(data, loadPresetDCall);
+}
+
+function loadPreset(sampleName){
+  var fetcher = new XMLHttpRequest();
+  fetcher.onload = loadPresetRCall;
+  fetcher.open("GET", "samples/" + sampleName + ".mp3", true);
+  fetcher.responseType = "arrayBuffer";
+
+  fetcher.send(loadPresetRCall);
+}
+
 function initDOM(){
   objFile = document.getElementById("file");
   objPlaybtn = document.getElementById("play");
@@ -208,11 +231,9 @@ function initDOM(){
     displayDialogue("<p>Your file is being processed</p><br/><img class='rounded fit' src='../images/loading2.gif'></img>");
     var reader = new FileReader();
     var file = event.target.files[0];
-    console.log(event.target.files[0]);
 
     reader.onload = function(raw){
       var msg = midiController.loadMidi(raw);
-      //console.log(msg);
       if(msg != ""){
         displayDialogue("<p>There was a problem loading your file!</p><br/><p>" + msg + "</p>", "OK");
       } else {
@@ -238,7 +259,6 @@ function initGradient(){
     gfxGradient.data[i + 1] = parseInt(tmpCol[1], 10);
     gfxGradient.data[i + 2] = parseInt(tmpCol[2], 10);
     gfxGradient.data[i + 3] = Math.floor(255 * (1 - i / 4 / gfxController.width / Math.floor(gfxController.height * 0.1)));
-    //console.log(Math.floor(255 * (1 - i / 4 / gfxController.width / gfxController.height)));
   }
 
   gfxController.clearScreen();
@@ -304,6 +324,8 @@ function initColors(){
     tRGB(248, 16, 171), //Pink
     tRGB(202, 16, 248), //Light Purple
     tRGB(16, 194, 248), //Teal
+    tRGB(200,200,200), //Light Gray
+    tRGB(100,100,100) //Dark Gray
   ];
 
   usableColors = []
@@ -311,9 +333,9 @@ function initColors(){
     usableColors[i] = [];
     var color = colors[i]
     usableColors[i][0] = color;
-    usableColors[i][1] = tRGB(Math.floor(color.r * 0.7),
-                              Math.floor(color.g * 0.7),
-                              Math.floor(color.b * 0.7));
+    usableColors[i][1] = tRGB(Math.floor(color.r * 0.6),
+                              Math.floor(color.g * 0.6),
+                              Math.floor(color.b * 0.6));
   }
 }
 
@@ -345,10 +367,22 @@ function init(){
 
   initColors();
 
-  setTimeout(function(){
-    hideDialogue();
-    requestAnimationFrame(draw);
-  }, 3000);
+  switch (window.location.protocol) {
+    case "http:":
+    case "https:":
+      loadPreset("e-piano2");
+      break;
+
+    case "file:":
+      displayDialogue("<p>Running in local mode</p><p>Defaulting to generated preset</p>", "OK");
+      requestAnimationFrame(draw);
+      break;
+
+    default:
+      displayDialogue("<p>Unknown protocol type</p><p>Defaulting to generated preset</p>", "OK");
+      requestAnimationFrame(draw);
+      break;
+  }
 }
 
 window.onload = init;
