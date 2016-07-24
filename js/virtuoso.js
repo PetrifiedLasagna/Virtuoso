@@ -196,20 +196,25 @@ function timeUpdate(newTime){
 }
 
 function loadPresetDCall(buffer){
-  midiController.setSample(buffer, 69, 0.01138, 0);
+  midiController.setSample(buffer, 69, 0, 0);
+  hideDialogue();
+}
+
+function loadPresetECall(e){
+  displayDialogue("<p>Failed to load preset</p><p>" + e.err + "</p><p>Using default preset</p>", "OK");
 }
 
 //Loads a preset which must be fetched with XMLRequest
 function loadPresetRCall(e){
   var data = this.response;
-  audioController.decodeFile(data, loadPresetDCall);
+  audioController.decodeFile(data, loadPresetDCall, loadPresetECall);
 }
 
 function loadPreset(sampleName){
   var fetcher = new XMLHttpRequest();
   fetcher.onload = loadPresetRCall;
-  fetcher.open("GET", "samples/" + sampleName + ".mp3", true);
-  fetcher.responseType = "arrayBuffer";
+  fetcher.open("GET", "samples/" + sampleName + ".ogg", true);
+  fetcher.responseType = "arraybuffer";
 
   fetcher.send(loadPresetRCall);
 }
@@ -370,19 +375,18 @@ function init(){
   switch (window.location.protocol) {
     case "http:":
     case "https:":
-      loadPreset("e-piano2");
+      loadPreset("e-piano");
       break;
 
     case "file:":
       displayDialogue("<p>Running in local mode</p><p>Defaulting to generated preset</p>", "OK");
-      requestAnimationFrame(draw);
       break;
 
     default:
       displayDialogue("<p>Unknown protocol type</p><p>Defaulting to generated preset</p>", "OK");
-      requestAnimationFrame(draw);
       break;
   }
+  requestAnimationFrame(draw);
 }
 
 window.onload = init;
