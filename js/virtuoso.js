@@ -196,8 +196,7 @@ function update(time){
   prevPressed = pressed;
 }
 
-var pTime = 0;
-function draw(cTime){
+function draw(){
   //gfxController.setDrawMode("source-over");
   //gfxController.fillRect(0, 0, gfxController.width, gfxController.height, tRGB(0, 0, 0));
   gfxController.clearRect(0, 0, gfxController.width, gfxController.height - key0Height - 1);
@@ -213,15 +212,12 @@ function draw(cTime){
 
   //gfxController.putImage(gfxGradient, 0, 0);
   gfxController.swapBuffers();
+  requestAnimationFrame(draw);
   if(midiController.playing){
     if(midiController.realTime - t < 4 || midiController.realTime < t){
       midiController.playCallback(Math.abs(midiController.realTime - t));
-      //pTime = cTime;
     }
-  } else {
-    pTime = cTime
   }
-  requestAnimationFrame(draw);
 }
 
 function hideDialogue(){
