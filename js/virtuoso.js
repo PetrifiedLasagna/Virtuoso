@@ -77,6 +77,91 @@ function drawNote(note, time){
   gfxController.fillRect(x + 3, y + 3, width - 6, height - 6, usableColors[index][0]);
 }
 
+function newDrawNotes(time){
+  var sorts = midiController.activeNotes.slice().sort(function(a, b){
+    if(a === null){
+      return 1;
+    }else if(b === null){
+      return -1;
+    } else if(colorMode){
+      return a.track - b.track;
+    }
+    return a.channel - b.channel;
+  });
+
+  var groups = [];
+  var room = gfxController.height - key0Height;
+  for(var i = 0; i < sorts.length; i++){
+    if(sorts[i]){
+      var startTime = sorts[i].startTime;
+      var endTime = sorts[i].endTime;
+
+      var xPos = getKey(sorts[i].note).x;
+      var width = getKey(sorts[i].note).width;
+
+      var yPos;
+      var height;
+
+      if(endTime > -1){
+        yPos = Math.floor(room * (1 - (endTime - time) / 2));
+      } else {
+        yPos = 0;
+      }
+
+      if(startTime - time > 2){
+        height = 0;
+      } else {
+        var yy = room * (1 - (startTime - time) / 2);
+        var height = Math.floor(yy - yPos);
+      }
+
+      if(i == 0){
+        groups.push(new Array());
+        if(colorMode){
+          groups[groups.length - 1].push({col: sorts[i].track, x: xPos, y: yPos, w: width, h: height});
+        } else {
+          groups[groups.length - 1].push({col: sorts[i].channel, x: xPos, y: yPos, w: width, h: height});
+        }
+
+      } else {
+        if(colorMode){
+          if(sorts[i].track != sorts[i-1].track){
+            groups.push(new Array());
+          }
+          groups[groups.length - 1].push({col: sorts[i].track, x: xPos, y: yPos, w: width, h: height});
+        } else {
+          if(sorts[i].channel != sorts[i-1].channel){
+            groups.push(new Array());
+          }
+          groups[groups.length - 1].push({col: sorts[i].channel, x: xPos, y: yPos, w: width, h: height});
+        }
+      }
+    }
+  }
+
+  for(var g = 0; g < groups.length; g++){
+    var indG = groups[g];
+    var indC = groups[g][0].col;
+
+    gfxController.setFillStyle(usableColors[indC][1]);
+    gfxController.startBuffering();
+    gfxController.moveTo(0,0);
+    for(var i = 0; i < indG.length; i++){
+      gfxController.prepareRect(indG[i].x, indG[i].y, indG[i].w, indG[i].h);
+    }
+    gfxController.finishRects();
+
+    gfxController.setFillStyle(usableColors[indC][0]);
+    gfxController.startBuffering();
+    gfxController.moveTo(0,0);
+    for(var i = 0; i < indG.length; i++){
+      gfxController.prepareRect(indG[i].x + 3, indG[i].y + 3, indG[i].w - 6, indG[i].h - 6);
+    }
+    gfxController.finishRects();
+
+  }
+}
+
 function update(time){
   var notes = midiController.activeNotes;
   var pressed = new Array();
@@ -84,7 +169,6 @@ function update(time){
   for(var i = 0; i < notes.length; i++){
     var note = notes[i];
     if(note){
-      drawNote(note, time);
       if(note.startTime < time && (note.endTime == -1 || note.endTime > time)){
         pressed.push(note.note);
         if(colorMode){
@@ -119,6 +203,7 @@ function draw(cTime){
   gfxController.clearRect(0, 0, gfxController.width, gfxController.height - key0Height - 1);
   var t = audioController.getTime();
   update(t);
+  newDrawNotes(t);
 
   for(var i = 0; i < keys.length; i++){
     var tmpkey = keys[i];
@@ -128,15 +213,15 @@ function draw(cTime){
 
   //gfxController.putImage(gfxGradient, 0, 0);
   gfxController.swapBuffers();
-  requestAnimationFrame(draw);
   if(midiController.playing){
-    if(Math.floor(cTime - tempo/60) > pTime){
-      midiController.playCallback((cTime - pTime) / 1000);
-      pTime = cTime;
+    if(midiController.realTime - t < 4 || midiController.realTime < t){
+      midiController.playCallback(Math.abs(midiController.realTime - t));
+      //pTime = cTime;
     }
   } else {
     pTime = cTime
   }
+  requestAnimationFrame(draw);
 }
 
 function hideDialogue(){
