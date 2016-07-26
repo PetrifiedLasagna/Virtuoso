@@ -44,14 +44,36 @@ class GfxEngine{
   }
 
   fillRect(x, y, width, height, bgColor){
-    var style = getString(bgColor);
+    if(bgColor !== undefined){
+      this.setFillStyle(bgColor);
+    }
+
+    this.contextB.fillRect(x, y, width, height);
+  }
+
+  setFillStyle(col){
+    var style = getString(col);
 
     if(style != this.currentState.fillStyle){
       this.contextB.fillStyle = style;
       this.currentState.fillStyle = style;
     }
+  }
 
-    this.contextB.fillRect(x, y, width, height);
+  startBuffering(){
+    this.contextB.beginPath();
+  }
+
+  moveTo(x, y){
+    this.contextB.moveTo(x, y);
+  }
+
+  prepareRect(x, y, width, height){
+    this.contextB.rect(x, y, width, height);
+  }
+
+  finishRects(){
+    this.contextB.fill()
   }
 
   clearRect(x, y, width, height){
