@@ -270,7 +270,7 @@ class MidiHandler {
     this.activeNotes = new Array();
 
     this.gain = audioEngine.newGain();
-    this.gain.gain.value = 0.02;
+    this.gain.gain.value = 0.5;
     this.gain.connect(audioEngine.getDestination());
 
     if(!note_frequencies){
