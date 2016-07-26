@@ -569,7 +569,7 @@ class MidiHandler {
       var realNow = this.realTime;
       //var nextTime = Math.round(now + this.info.tempoBPM / 60 * this.currentMidi.header.divisions.true_value);
       //var nextTime = now + this.info.tempoBPM;
-      var nextTime = Math.round(now + lookAhead * this.currentMidi.header.divisions.true_value);
+      var nextTime = Math.floor(now + lookAhead * this.currentMidi.header.divisions.true_value);
       var ind = this.songPointer;
       var notes = this.activeNotes;
       //var gains = this.gainNotes;
