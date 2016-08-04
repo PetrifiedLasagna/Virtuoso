@@ -641,7 +641,7 @@ class MidiHandler {
             break;
 
           case metaEvents[2]: //key sig
-            this.keyChange(data[1], data[2]);
+            this.keyChange(data[1], data[2], time);
             break;
         }
         break;
@@ -752,7 +752,7 @@ class MidiHandler {
 
     if(call && this.tempoCallback){
       if(!(time === undefined)){
-        setTimeout(this.tempoCallback, time - this.engine.getTime(), newTempo);
+        setTimeout(this.tempoCallback, (time - this.engine.getTime()) * 1000, newTempo);
       } else {
         this.tempoCallback(newTempo);
       }
@@ -777,7 +777,7 @@ class MidiHandler {
 
     if(call && this.keyCallback){
       if(!(time === undefined)){
-        setTimeout(this.keyCallback, time - this.engine.getTime(), newKey);
+        setTimeout(this.keyCallback, (time - this.engine.getTime()) * 1000, newKey);
       } else {
         this.keyCallback(newKey);
       }
@@ -797,7 +797,7 @@ class MidiHandler {
 
     if(call && this.timeCallback){
       if(!(time === undefined)){
-        setTimeout(this.timeCallback, time - this.engine.getTime(), newTime);
+        setTimeout(this.timeCallback, (time - this.engine.getTime()) * 1000, newTime);
       } else {
         this.timeCallback(newTime);
       }
