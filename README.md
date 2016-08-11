@@ -23,14 +23,16 @@ Planned Features:
 
 ## **Download and Setup**
 
-Getting this setup on a server or on your computer is a fairly straightforward process. For servers with PHP installed, copy the files from the **bin/server** folder to any directory. You can modify "virtioso.php" to suit the needs of your server. The HTML file assumes that the document header has not been closed and you may need to make adjustments to suit your needs. For example, you could use the following.
+Getting this setup on a server or on your computer is a fairly straightforward process. All you have to do is view the releases and download the zip for the latest release. The files in the zip are a universal build which can be made to fit most typical usage scenarios.
+
+If you want the application to fit in with your servers styles, you can remove the all of the tags surrounding `<div id="app-container">...</div>` except for the closing `</head>` than you can use something along the lines of the following code to make it be served with your pages styles.
 
 ```php
 <?php
 
 ob_start();
 
-include("Path to header");
+include("Path to your html header");
 include("Path to virtuoso.html");
 $content = ob_get_contents();
 
@@ -40,13 +42,15 @@ if(substr_count($content, "</head>") > 1){
   $content = substr_replace($content, "", strpos($content, "</head>"), strlen("</head>"));
 }
 
+echo $content;
+
 /*
-Rest of file
+Footer and other stuff that you need
 */
 ?>
 ```
 
-Additionally, the **bin/local** folder contains the files organized in a way that is suitable for use on personal computers and servers without PHP. All you need to do is put the files in a directory of your choosing and then open **virtuoso.html**.
+You can also use an iframe to fit the application in your page. Or if you just want to use the app locally, you can just open "virtuoso.html" after extracting all the files.
 
 ## **License**
 
