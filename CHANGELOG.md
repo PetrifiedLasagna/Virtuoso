@@ -1,3 +1,9 @@
+**Beta 0.3.1**
+- Added support for pedal events (does not affect outputted sound yet)
+- Fixes in the style sheet
+- Proper resetting when loading different song
+- will reset any meta info when playback has completed
+
 **Beta 0.2.4**
 - Several optimizations (e.g. buffered drawing)
 - Fixed major bug that caused playback to go way ahead and cause performance issues from size of note buffer
