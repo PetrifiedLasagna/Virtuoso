@@ -5,6 +5,13 @@ body.default {
 
 img.fit {
   width: 80%;
+  height: auto;
+}
+
+img.indicator {
+  filter: grayscale(100%) brightness(60%);
+  border-radius: 50%;
+  width: 1.5em;
 }
 
 #app-container {
@@ -44,6 +51,8 @@ img.fit {
   margin: 0 2%;
   /*font-size: 2em;*/
   font-weight: bold;
+  vertical-align: middle;
+  text-align: center;
 }
 
 .block-justify {
