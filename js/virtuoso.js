@@ -16,6 +16,7 @@ var objTempo;
 var objKey;
 var objTimeNumerator;
 var objTimeDenominator;
+var objPedal;
 
 var usableColors;
 var colorMode;
@@ -248,6 +249,7 @@ function displayDialogue(content, button){
 var tempo = 120;
 var key = new songKeySignature();
 var time = new songTimeSignature();
+var pedal = false;
 
 function tempoUpdate(newTempo){
   tempo = newTempo;
@@ -274,6 +276,15 @@ function timeUpdate(newTime){
   time = newTime;
   objTimeNumerator.innerHTML = time.numerator.toString();
   objTimeDenominator.innerHTML = time.denominator.toString();
+}
+
+function pedalUpdate(newPedal){
+  pedal = newPedal;
+  if(pedal){
+    objPedal.style.filter = "unset";
+  } else {
+    objPedal.style.filter = "";
+  }
 }
 
 function loadPresetDCall(buffer){
@@ -308,6 +319,7 @@ function initDOM(){
   objTimeNumerator = document.getElementById("time-numerator");
   objTimeDenominator = document.getElementById("time-denominator");
   objKey = document.getElementById("key-signature");
+  objPedal = document.getElementById("pedal");
 
   objPlaybtn.onclick = function() {
     midiController.play();
@@ -448,6 +460,7 @@ function init(){
   midiController.tempoCallback = tempoUpdate;
   midiController.keyCallback = keyUpdate;
   midiController.timeCallback = timeUpdate;
+  midiController.pedalCallback = pedalUpdate;
 
   initKeyboard();
 
