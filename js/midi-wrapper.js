@@ -56,6 +56,7 @@ var songInfo = function(){
   this.tempoBPM = 120; //BPM
   this.timeSig = new songTimeSignature();
   this.keySig = new songKeySignature();
+  this.pedal = false;
 };
 
 var midiNote = function(){
@@ -186,6 +187,10 @@ var midiEvents = [
   0x90, //Note on
   0xB0  //Controller
 ];
+
+var controllerEvents = [
+  0x40 //Damper/Sustain pedal
+]
 
 var metaEvents = [
   0x51, //Tempo
@@ -330,6 +335,7 @@ class MidiHandler {
   loadMidi(file){
     this.usableEvents = null;
     this.clearBuffers();
+    this.resetInfo();
 
     var data = new Uint8Array(file.target.result);
     var midi = new midiFile();
@@ -592,7 +598,7 @@ class MidiHandler {
           ind++;
         } else {
           //console.log("ended");
-          //setTimeout(this.clearBuffers.bind(this), (realNow - this.engine.getTime()) * 1000);
+          setTimeout(this.clearBuffers.bind(this), (realNow - this.engine.getTime()) * 1000);
           this.playing = false;
           ind = 0;
           now = 0;
@@ -624,6 +630,9 @@ class MidiHandler {
           case midiEvents[1]:
             this.noteOn(readInt({pos: 0}, 1, data), readInt({pos: 1}, 1, data), e.track, e.channel, time);
             break;
+
+          case midiEvents[2]:
+            this.processController(e, time);
         }
 
         break;
@@ -644,6 +653,18 @@ class MidiHandler {
             this.keyChange(data[1], data[2], time);
             break;
         }
+        break;
+    }
+  }
+
+  processController(e, time){
+    var id = readInt({pos: 0}, 1, e.data);
+    var data = readInt({pos: 1}, 1, e.data);
+
+    switch (id) {
+      //Damper pedal
+      case controllerEvents[0]:
+        this.pedalChange(data, time);
         break;
     }
   }
@@ -741,6 +762,22 @@ class MidiHandler {
     }
   }
 
+  pedalChange(state, time, call){
+    if(call === undefined){
+      call = true;
+    }
+
+    this.info.pedal = state;
+
+    if(call && this.pedalCallback){
+      if(!(time === undefined)){
+        setTimeout(this.pedalCallback, (time - this.engine.getTime()) * 1000, state);
+      } else {
+        this.pedalCallback(state);
+      }
+    }
+  }
+
   tempoChange(tMicro, time, call){
     if(call === undefined){
       call = true;
@@ -833,5 +870,13 @@ class MidiHandler {
       }
     }
     this.activeNotes.length = 0;
+
+    this.pedalChange(false);
+  }
+
+  resetInfo(){
+    this.tempoChange(500000);
+    this.keyChange(0, 0);
+    this.timeChange(4, 4);
   }
 }
