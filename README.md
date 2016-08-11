@@ -4,16 +4,18 @@ With virtuoso your computer can help you learn your favorite songs on piano for 
 
 ## **Version Information**
 
-**Current Version:** 0.1.0 Beta
+**Current Version:** 0.3.1 Beta
 
-Live Demo: http://notebookinc.byethost15.com/js/virtuoso/
+Live Demo: http://notebookinc.byethost15.com/js/virtuoso/virtuoso.html
 
 Current Features:
 - Midi playback
 - Playback visualization
 - Limited midi event engine
+- Displays helpful meta info (tempo, key, pedal, etc.)
 
 Planned Features:
+- Find way to load default sample in local mode
 - Tempo Control
 - Layer Color Control
 - Instrument Control (including defining waveforms)
