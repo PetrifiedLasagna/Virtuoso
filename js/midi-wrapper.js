@@ -1,7 +1,8 @@
 "use strict";
 
 var midiEvent = function(){
-  this.delta = 0;
+  this.delta = 0; //offset in ticks
+  this.timeCode = 0; //offset in realTime, requires calculation after loading
 
   // type 0 - midi event, type 1 - system exlusive, type 2 - meta event
   this.type = 0;
@@ -54,6 +55,7 @@ var songKeySignature = function(){
 var songInfo = function(){
   this.tempo = 500000; //microseconds 500,000
   this.tempoBPM = 120; //BPM
+  this.duration = 0;
   this.timeSig = new songTimeSignature();
   this.keySig = new songKeySignature();
   this.pedal = false;
@@ -297,6 +299,7 @@ class MidiHandler {
     this.keyCallback = null;
     this.timeCallback = null;
 
+    this.volFalloff.last = this.engine.getTime();
     setInterval(this.volFalloff.bind(this), 50);
   }
 
@@ -333,6 +336,7 @@ class MidiHandler {
   }
 
   loadMidi(file){
+    this.currentTime = 0;
     this.usableEvents = null;
     this.clearBuffers();
     this.resetInfo();
@@ -547,7 +551,26 @@ class MidiHandler {
 
     this.usableEvents = events;
 
-    for(var i = 0; this.usableEvents.length; i++){
+    //calculate event timecodes
+    var now = 0;
+    var timeCode = 0;
+    for(var i = 0; i < this.usableEvents.length; i++){
+      var e = this.usableEvents[i];
+      var type = e.type;
+
+      //only process metaEvents i.e. tempo changes
+      if(type == 2) this.processEvent(e, 0, false);
+
+      //same as in playCallback
+      timeCode += (e.delta - now) / this.currentMidi.header.divisions.true_value / (this.info.tempoBPM / 60);
+      e.timeCode = timeCode;
+      now = e.delta;
+    }
+
+    this.info.duration = timeCode;
+
+    //process starting meta events
+    for(var i = 0; i < this.usableEvents.length; i++){
       var type = this.usableEvents[i].type;
       if(type == 2){
         this.processEvent(this.usableEvents[i]);
@@ -558,19 +581,41 @@ class MidiHandler {
 
   }
 
-  play(){
-    if(this.usableEvents != null && !this.playing){
-      this.clearBuffers();
-      this.realTime = this.engine.getTime() + 2;
-      this.playing = true;
+  setTimeCode(t){
+    this.clearBuffers();
+    for(var i = 0; i < this.usableEvents.length; i++){
+      this.currentTime = this.usableEvents[i].delta;
+      this.songPointer = i;
+      if(t <= this.usableEvents[i].timeCode) break;
+    }
+  }
 
-      //console.log("hello");
+  stop(){
+    if(this.playing){
+      setTimeout(this.clearBuffers.bind(this), 2000);
+      this.playing = false;
+    }
+  }
+
+  play(delay){
+    if(delay === undefined) delay = 0;
+
+    if(this.usableEvents != null && !this.playing){
+      this.playing = true;
+      this.realTime = this.engine.getTime() + delay;
+
+      while(this.songPointer > 0){
+        if(this.currentTime > this.usableEvents[this.songPointer].delta) break;
+        this.songPointer--;
+      }
+
+      console.log("play");
       this.playCallback();
     }
   }
 
   playCallback(lookAhead){
-    if(this.playing){
+    if(this.playing == true && this.songPointer <= this.usableEvents.length){
       var now = this.currentTime;
       var realNow = this.realTime;
       //var nextTime = Math.round(now + this.info.tempoBPM / 60 * this.currentMidi.header.divisions.true_value);
@@ -597,11 +642,13 @@ class MidiHandler {
           this.processEvent(e, realNow);
           ind++;
         } else {
-          //console.log("ended");
-          setTimeout(this.clearBuffers.bind(this), (realNow - this.engine.getTime()) * 1000);
-          this.playing = false;
-          ind = 0;
+          //setTimeout(this.clearBuffers.bind(this), (realNow - this.engine.getTime() + 2) * 1000);
+          this.clearBuffersSoft(2);
+          setTimeout(function(){
+            this.playing = false;
+          }.bind(this), (realNow - this.engine.getTime() + .1) * 1000);
           now = 0;
+          ind = this.usableEvents.length + 1;
           break;
         }
       }
@@ -613,7 +660,7 @@ class MidiHandler {
     }
   }
 
-  processEvent(e, time){
+  processEvent(e, time, call){
     var eType = e.type;
     var data = e.data;
     var id;
@@ -632,7 +679,7 @@ class MidiHandler {
             break;
 
           case midiEvents[2]:
-            this.processController(e, time);
+            this.processController(e, time, call);
         }
 
         break;
@@ -642,15 +689,15 @@ class MidiHandler {
 
         switch(id){
           case metaEvents[0]: //tempo
-            this.tempoChange(readInt({pos: 1}, 3, data), time);
+            this.tempoChange(readInt({pos: 1}, 3, data), time, call);
             break;
 
           case metaEvents[1]: //time sig
-            this.timeChange(data[1], Math.pow(2, data[2]), time);
+            this.timeChange(data[1], Math.pow(2, data[2]), time, call);
             break;
 
           case metaEvents[2]: //key sig
-            this.keyChange(data[1], data[2], time);
+            this.keyChange(data[1], data[2], time, call);
             break;
         }
         break;
@@ -678,7 +725,6 @@ class MidiHandler {
         if(tmp.note == key && tmp.track == track && tmp.channel == channel && tmp.playing == true){
           tmp.playing = false;
           tmp.endTime = time;
-          tmp.oscillator.stop(time);
           break;
         }
       }
@@ -767,12 +813,11 @@ class MidiHandler {
       call = true;
     }
 
-    this.info.pedal = state;
-
     if(call && this.pedalCallback){
       if(!(time === undefined)){
-        setTimeout(this.pedalCallback, (time - this.engine.getTime()) * 1000, state);
+        setTimeout(function(){this.info.pedal = state; this.pedalCallback(state);}.bind(this), (time - this.engine.getTime()) * 1000);
       } else {
+        this.info.pedal = state;
         this.pedalCallback(state);
       }
     }
@@ -842,20 +887,23 @@ class MidiHandler {
   }
 
   volFalloff(){
+    var d = (this.engine.getTime() - this.volFalloff.last);
+    this.volFalloff.last = this.engine.getTime();
+
     var t = this.engine.getTime();
     var notes = this.activeNotes;
     for(var i = 0; i < notes.length; i++){
       var note = notes[i];
       if(note){
         var vol = note.gain.gain.value;
-        if(vol > 0){
-          vol = Math.max(0, note.velocity * (1 - (t - note.startTime) / 4) );
+        if(vol > 0 && note.startTime <= this.engine.getTime()){
+          var strength = (this.info.pedal || note.endTime > this.engine.getTime()) ? 0.08 : .6; //falloff strength
+          vol = Math.max(0.0, vol - Math.sqrt(d * strength * vol)); //exponential falloff, sqrt because values <= 1
+          //console.log(this.playing, this.engine.getTime());
+          if(vol < .01) vol = 0;
           note.gain.gain.value = vol;
-          if(this.playing == false){
-            if(vol <= 0){
-              note.oscillator.stop(t + 2.1);
-              note.endTime = t + 2.1;
-            }
+          if(vol < .01 && note.endTime != -1 && note.endTime < this.engine.getTime()){
+            note.oscillator.stop();
           }
         }
       }
@@ -872,6 +920,16 @@ class MidiHandler {
     this.activeNotes.length = 0;
 
     this.pedalChange(false);
+  }
+
+  clearBuffersSoft(delay){
+    var notes = this.activeNotes;
+    var t = this.realTime + delay;
+
+    for(var i = 0; i < notes.length; i++){
+      if(notes[i].endTime == -1 || notes[i].endTime > t)
+        notes[i].oscillator.stop(t);
+    }
   }
 
   resetInfo(){

@@ -8,15 +8,18 @@ var AudioFile = function (){
   this.data = []; //Audio/Waveform data
 };
 
-var audioCtx = null;
-
 class AudioEngine {
   constructor (){
     // All of the necessary audio control variables
+
+    var audioCtx;
+
     if(!audioCtx){
       window.AudioContext = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioContext();
     }
+
+    this.context = audioCtx;
 
     // Will hold audio data waiting to be played
     this.buffer = null;
@@ -54,7 +57,7 @@ class AudioEngine {
   loadCallback (file){
     console.log("load callback");
     var raw = file.target.result;
-    audioCtx.decodeAudioData(raw, this.decodeCallback.bind(this));
+    this.context.decodeAudioData(raw, this.decodeCallback.bind(this));
   }
 
   // Called by loadCallback after file has been decoded
@@ -77,7 +80,7 @@ class AudioEngine {
     this.decodedFile = audioTemp;
 
     if(this.autoCreateBuffer){
-      var buffer = audioCtx.createBuffer(audioTemp.channels, audioTemp.length, audioTemp.sampleRate);
+      var buffer = this.context.createBuffer(audioTemp.channels, audioTemp.length, audioTemp.sampleRate);
 
       var samples;
       for(var c = 0; c < audioTemp.channels; c++){
@@ -96,35 +99,35 @@ class AudioEngine {
   }
 
   decodeFile(audioData, callback){
-    audioCtx.decodeAudioData(audioData, callback);
+    this.context.decodeAudioData(audioData, callback);
   }
 
   newBuffer(numChannels, length, sampleRate){
-    return audioCtx.createBuffer(numChannels, length, sampleRate);
+    return this.context.createBuffer(numChannels, length, sampleRate);
   }
 
   newBufferSource(){
-    return audioCtx.createBufferSource();
+    return this.context.createBufferSource();
   }
 
   newOscillator(){
-    return audioCtx.createOscillator();
+    return this.context.createOscillator();
   }
 
   newGain(){
-    return audioCtx.createGain();
+    return this.context.createGain();
   }
 
   getDestination(){
-    return audioCtx.destination;
+    return this.context.destination;
   }
 
   // Play data that is in buffer
   play(delay, endCallback){
     if(this.buffer){
-      var source = audioCtx.createBufferSource();
+      var source = this.context.createBufferSource();
       source.buffer = this.buffer;
-      source.connect(audioCtx.destination);
+      source.connect(this.context.destination);
 
       if(endCallback){
         source.onended = endCallback;
@@ -144,7 +147,15 @@ class AudioEngine {
     }
   }
 
+  resume(){
+    this.context.resume();
+  }
+
+  suspend(){
+    this.context.suspend();
+  }
+
   getTime(){
-    return audioCtx.currentTime;
+    return this.context.currentTime;
   }
 }

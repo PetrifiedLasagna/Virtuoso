@@ -10,7 +10,12 @@ var objDialog;
 var objGfxGradient;
 
 var objFile;
+
+var objTime;
+var objTimeText;
+var objTimeTextEnd;
 var objPlaybtn;
+var objStopbtn;
 
 var objTempo;
 var objKey;
@@ -23,6 +28,8 @@ var colorMode;
 
 var keys;
 var keymap;
+
+var playStart;
 
 function getKey(value){
   return keys[keymap[value].location];
@@ -215,6 +222,9 @@ function draw(){
   gfxController.swapBuffers();
   requestAnimationFrame(draw);
   if(midiController.playing){
+    var d = Math.floor(t - playStart);
+    objTime.value = d;
+    objTimeText.value = Math.floor(d / 60).toString() + ":" + Math.round(d - Math.floor(d / 60) * 60).toString();
     if(midiController.realTime - t < 4 || midiController.realTime < t){
       midiController.playCallback(Math.abs(midiController.realTime - t));
     }
@@ -313,7 +323,11 @@ function loadPreset(sampleName){
 
 function initDOM(){
   objFile = document.getElementById("file");
+  objTime = document.getElementById("time");
+  objTimeText = document.getElementById("time-text");
+  objTimeTextEnd = document.getElementById("time-text-end");
   objPlaybtn = document.getElementById("play");
+  objStopbtn = document.getElementById("stop");
   objTempo = document.getElementById("tempo");
   objGfxGradient = document.getElementById("gfx-gradient");
   objTimeNumerator = document.getElementById("time-numerator");
@@ -322,8 +336,24 @@ function initDOM(){
   objPedal = document.getElementById("pedal");
 
   objPlaybtn.onclick = function() {
-    midiController.play();
+    midiController.play(2);
+    playStart = audioController.getTime() - objTime.valueAsNumber + 2;
   };
+
+  objStopbtn.onclick = function(){
+    midiController.stop();
+    midiController.setTimeCode(objTime.valueAsNumber);
+  };
+
+  objTime.value = 0;
+  objTimeText.value = objTimeTextEnd.value = "0:0";
+
+  objTime.oninput = function(){
+    var d = objTime.valueAsNumber;
+    objTimeText.value = Math.floor(d / 60).toString() + ":" + Math.round(d - Math.floor(d / 60) * 60).toString();
+    midiController.setTimeCode(d);
+  };
+
   objFile.value = "";
   objFile.onchange = function(event){
     displayDialogue("<p>Your file is being processed</p><br/><img class='rounded fit' src='../images/loading2.gif'></img>");
@@ -336,6 +366,11 @@ function initDOM(){
         displayDialogue("<p>There was a problem loading your file!</p><br/><p>" + msg + "</p>", "OK");
       } else {
         colorMode = midiController.currentMidi.header.format == 2;
+
+        var d = midiController.info.duration;
+        objTime.max = d;
+        objTimeTextEnd.value = Math.floor(d / 60).toString() + ":" + Math.round(d - Math.floor(d / 60) * 60).toString();
+
         displayDialogue("<p>Your file was succsessfully loaded!</p>", "OK");
       }
     };

@@ -11,7 +11,14 @@
     <div id="app-container">
       <div class="block-justify">
         <input type="file" id="file" accept=".midi,.mid"/>
+        <br/>
+        <div style="display: inline-block">
+          <input type="range" id="time" min="0" max="0" step="1" value="0"/>
+          <input type="text" id="time-text" disabled="" size="6" value="0:0"/>
+          <input type="text" id="time-text-end" disabled="" size="6" value="0:0"/>
+        </div>
         <input type="button" id="play" value="Play"/>
+        <input type="button" id="stop" value="Stop"/>
       </div>
 
       <div class="block-justify">
@@ -38,7 +45,7 @@
 
       <div id="gfx-container">
         <div id="gfx-gradient"></div>
-        <canvas id="Application" width="1352" height="530">Your browser does not support HTML5 canvas!</canvas>
+        <canvas id="Application" width="1352" height="480">Your browser does not support HTML5 canvas!</canvas>
       </div>
 
       <script src="../js/audio-wrapper.js" type="text/javascript" defer=""></script>
