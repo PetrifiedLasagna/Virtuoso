@@ -222,7 +222,7 @@ function draw(){
   gfxController.swapBuffers();
   requestAnimationFrame(draw);
   if(midiController.playing){
-    var d = Math.max(0, Math.min(objTime.max, Math.floor(t - playStart)) );
+    var d = Math.max(0, Math.min(objTime.max, t - playStart) );
     objTime.value = d;
     objTimeText.value = Math.floor(d / 60).toString() + ":" + Math.round(d - Math.floor(d / 60) * 60).toString();
     if(midiController.realTime - t < 4 || midiController.realTime < t){
@@ -355,6 +355,10 @@ function initDOM(){
   objTimeText.value = objTimeTextEnd.value = "0:0";
 
   objTime.oninput = function(){
+    if(midiController.playing == true){
+      midiController.stop();
+      midiController.clearBuffers();
+    }
     var d = objTime.valueAsNumber;
     objTimeText.value = Math.floor(d / 60).toString() + ":" + Math.round(d - Math.floor(d / 60) * 60).toString();
     midiController.setTimeCode(d);
