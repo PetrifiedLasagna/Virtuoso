@@ -315,7 +315,7 @@ function loadPresetRCall(e){
 function loadPreset(sampleName){
   var fetcher = new XMLHttpRequest();
   fetcher.onload = loadPresetRCall;
-  fetcher.open("GET", "samples/" + sampleName + ".ogg", true);
+  fetcher.open("GET", "audioSamples/" + sampleName + ".ogg", true);
   fetcher.responseType = "arraybuffer";
 
   fetcher.send(loadPresetRCall);
@@ -357,7 +357,7 @@ function initDOM(){
 
   objFile.value = "";
   objFile.onchange = function(event){
-    displayDialogue("<p>Your file is being processed</p><br/><img class='rounded fit' src='../images/loading2.gif'></img>");
+    displayDialogue("<p>Your file is being processed</p><br/><img class='rounded fit' src='images/loading2.gif'></img>");
     var reader = new FileReader();
     var file = event.target.files[0];
 
@@ -483,7 +483,7 @@ function init(){
 
   objDialogContainer.appendChild(objDialog);
   document.body.appendChild(objDialogContainer);
-  displayDialogue("<p><strong>Initializing...<br/>Please Wait</strong></p><img class='rounded fit' src='../images/loading2.gif'></img>");
+  displayDialogue("<p><strong>Initializing...<br/>Please Wait</strong></p><img class='rounded fit' src='images/loading2.gif'></img>");
 
   initDOM();
 
