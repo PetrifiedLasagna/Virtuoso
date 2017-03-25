@@ -646,7 +646,7 @@ class MidiHandler {
           this.clearBuffersSoft(2);
           setTimeout(function(){
             this.playing = false;
-          }.bind(this), (realNow - this.engine.getTime() + .1) * 1000);
+          }.bind(this), (realNow - this.engine.getTime() + 2) * 1000);
           now = 0;
           ind = this.usableEvents.length + 1;
           break;

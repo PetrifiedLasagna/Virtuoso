@@ -222,7 +222,7 @@ function draw(){
   gfxController.swapBuffers();
   requestAnimationFrame(draw);
   if(midiController.playing){
-    var d = Math.max(0, Math.floor(t - playStart));
+    var d = Math.max(0, Math.min(objTime.max, Math.floor(t - playStart)) );
     objTime.value = d;
     objTimeText.value = Math.floor(d / 60).toString() + ":" + Math.round(d - Math.floor(d / 60) * 60).toString();
     if(midiController.realTime - t < 4 || midiController.realTime < t){
@@ -336,14 +336,18 @@ function initDOM(){
   objPedal = document.getElementById("pedal");
 
   objPlaybtn.onclick = function() {
-    midiController.play(2);
-    var d = midiController.usableEvents[midiController.songPointer].timeCode;
-    playStart = audioController.getTime() - d + 2;
+    if(midiController.playing == false){
+      midiController.play(2);
+      var d = midiController.usableEvents[midiController.songPointer].timeCode;
+      playStart = audioController.getTime() - d + 2;
+    }
   };
 
   objStopbtn.onclick = function(){
-    midiController.stop();
-    midiController.setTimeCode(objTime.valueAsNumber);
+    if(midiController.playing == true){
+      midiController.stop();
+      midiController.setTimeCode(objTime.valueAsNumber);
+    }
   };
 
   objTime.value = 0;
@@ -368,9 +372,11 @@ function initDOM(){
       } else {
         colorMode = midiController.currentMidi.header.format == 2;
 
-        var d = midiController.info.duration;
+        var d = midiController.info.duration.toFixed(1);
         objTime.max = d;
         objTimeTextEnd.value = Math.floor(d / 60).toString() + ":" + Math.round(d - Math.floor(d / 60) * 60).toString();
+        objTime.value = 0;
+        objTimeText.value = "0:0";
 
         displayDialogue("<p>Your file was succsessfully loaded!</p>", "OK");
       }
