@@ -222,7 +222,7 @@ function draw(){
   gfxController.swapBuffers();
   requestAnimationFrame(draw);
   if(midiController.playing){
-    var d = Math.floor(t - playStart);
+    var d = Math.max(0, Math.floor(t - playStart));
     objTime.value = d;
     objTimeText.value = Math.floor(d / 60).toString() + ":" + Math.round(d - Math.floor(d / 60) * 60).toString();
     if(midiController.realTime - t < 4 || midiController.realTime < t){
@@ -337,7 +337,8 @@ function initDOM(){
 
   objPlaybtn.onclick = function() {
     midiController.play(2);
-    playStart = audioController.getTime() - objTime.valueAsNumber + 2;
+    var d = midiController.usableEvents[midiController.songPointer].timeCode;
+    playStart = audioController.getTime() - d + 2;
   };
 
   objStopbtn.onclick = function(){

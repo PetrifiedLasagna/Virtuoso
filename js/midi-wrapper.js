@@ -605,12 +605,12 @@ class MidiHandler {
       this.realTime = this.engine.getTime() + delay;
 
       while(this.songPointer > 0){
-        if(this.currentTime > this.usableEvents[this.songPointer].delta) break;
+        if(this.songPointer < this.usableEvents.length && this.currentTime > this.usableEvents[this.songPointer].delta) break;
         this.songPointer--;
       }
 
-      console.log("play");
-      this.playCallback();
+      //console.log("play");
+      //this.playCallback();
     }
   }
 
