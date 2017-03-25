@@ -264,6 +264,7 @@ class MidiHandler {
     this.currentTime = 0;
     this.realTime = 0;
     this.songPointer = 0;
+    this.clearCallback = 0;
 
     this.info = new songInfo();
     this.masterVolume = 100;
@@ -582,17 +583,18 @@ class MidiHandler {
   }
 
   setTimeCode(t){
-    this.clearBuffers();
+    //this.clearBuffers();
     for(var i = 0; i < this.usableEvents.length; i++){
       this.currentTime = this.usableEvents[i].delta;
       this.songPointer = i;
-      if(t <= this.usableEvents[i].timeCode) break;
+      if(t < this.usableEvents[i].timeCode) break;
     }
   }
 
   stop(){
     if(this.playing){
-      setTimeout(this.clearBuffers.bind(this), 2000);
+      //this.clearCallback = setTimeout(this.clearBuffers.bind(this), 2000);
+      //this.clearBuffersSoft(1);
       this.playing = false;
     }
   }
@@ -601,6 +603,8 @@ class MidiHandler {
     if(delay === undefined) delay = 0;
 
     if(this.usableEvents != null && !this.playing){
+      clearTimeout(this.clearCallback);
+      this.clearCallback = 0;
       this.playing = true;
       this.realTime = this.engine.getTime() + delay;
 
@@ -911,6 +915,7 @@ class MidiHandler {
   }
 
   clearBuffers(){
+    this.clearCallback = 0;
     var notes = this.activeNotes.slice();
     for(var i = 0; i < notes.length; i++){
       if(notes[i]){

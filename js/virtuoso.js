@@ -346,6 +346,7 @@ function initDOM(){
   objStopbtn.onclick = function(){
     if(midiController.playing == true){
       midiController.stop();
+      midiController.clearBuffers();
       midiController.setTimeCode(objTime.valueAsNumber);
     }
   };
