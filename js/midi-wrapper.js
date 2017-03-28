@@ -301,7 +301,7 @@ class MidiHandler {
     this.timeCallback = null;
 
     this.volFalloff.last = this.engine.getTime();
-    setInterval(this.volFalloff.bind(this), 50);
+    setInterval(this.volFalloff.bind(this), 20);
   }
 
   setSample(buffer, homeKey, loopStart, loopEnd, numChannels, sampleRate){
@@ -901,8 +901,10 @@ class MidiHandler {
       if(note){
         var vol = note.gain.gain.value;
         if(vol > 0 && note.startTime <= this.engine.getTime()){
-          var strength = (this.info.pedal || note.endTime > this.engine.getTime()) ? 0.08 : .6; //falloff strength
-          vol = Math.max(0.0, vol - Math.sqrt(d * strength * vol)); //exponential falloff, sqrt because values <= 1
+          var strength = (this.info.pedal || note.endTime > this.engine.getTime()) ? 1.5 : 6; //falloff strength
+          //vol = Math.max(0.0, vol - Math.sqrt(d * strength * vol)); //exponential falloff, sqrt because values <= 1
+          //vol = Math.max(0.0, note.velocity / (1 + Math.pow(note.startTime )))
+          vol = vol * Math.pow(Math.E, strength * -d); //Real exponential falloff... stupid me :P
           //console.log(this.playing, this.engine.getTime());
           if(vol < .01) vol = 0;
           note.gain.gain.value = vol;
