@@ -1,3 +1,10 @@
+**Beta 0.4.6**
+- Added play/stop buttons
+- Added time slider
+- Sound playback enhanced and made more realistic
+- Lots of optimizations and bug fixes
+- Actually counted the number of changes and categorized them...
+
 **Beta 0.3.1**
 - Added support for pedal events (does not affect outputted sound yet)
 - Fixes in the style sheet
