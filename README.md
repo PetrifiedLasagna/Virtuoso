@@ -34,6 +34,6 @@ Virtuoso is Licensed under GNU General Public License v3.0
 
 You can support this project with the crypto of your choosing. You can also help out by contributing to the project, or reporting bugs. Even voicing your suggestions for features is great. Anything to help is much appreciated.
 
-BTC: 1NyEZSdXfNGEbfaavU3q3UWqactaFqokBK
-LTC: LcXPtFyunDvjLFWC4Jp4A8gBMFHcyycqZF
+BTC: 1NyEZSdXfNGEbfaavU3q3UWqactaFqokBK  
+LTC: LcXPtFyunDvjLFWC4Jp4A8gBMFHcyycqZF  
 DOGE: DGVFwAAmhW13W542cjpSxEx2v6gkdEBQnr
