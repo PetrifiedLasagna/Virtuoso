@@ -4,7 +4,7 @@ With virtuoso your computer can help you learn your favorite songs on piano for 
 
 ## **Version Information**
 
-**Current Version:** 0.3.1 Beta
+**Current Version:** 0.4.6 Beta
 
 Live Demo: http://notebookinc.byethost15.com/js/virtuoso/virtuoso.html
 
@@ -13,6 +13,7 @@ Current Features:
 - Playback visualization
 - Limited midi event engine
 - Displays helpful meta info (tempo, key, pedal, etc.)
+- Basic start/stop functionality
 
 Planned Features:
 - Find way to load default sample in local mode
@@ -23,31 +24,16 @@ Planned Features:
 
 ## **Download and Setup**
 
-Getting this setup on a server or on your computer is a fairly straightforward process. For servers with PHP installed, copy the files from the **bin/server** folder to any directory. You can modify "virtioso.php" to suit the needs of your server. The HTML file assumes that the document header has not been closed and you may need to make adjustments to suit your needs. For example, you could use the following.
-
-```php
-<?php
-
-ob_start();
-
-include("Path to header");
-include("Path to virtuoso.html");
-$content = ob_get_contents();
-
-ob_end_clean();
-
-if(substr_count($content, "</head>") > 1){
-  $content = substr_replace($content, "", strpos($content, "</head>"), strlen("</head>"));
-}
-
-/*
-Rest of file
-*/
-?>
-```
-
-Additionally, the **bin/local** folder contains the files organized in a way that is suitable for use on personal computers and servers without PHP. All you need to do is put the files in a directory of your choosing and then open **virtuoso.html**.
+Getting this setup on your server/computer is as simple as downloading the files and copying them to the directory of your choosing.
 
 ## **License**
 
 Virtuoso is Licensed under GNU General Public License v3.0
+
+## **Donating**
+
+You can support this project with the crypto of your choosing. You can also help out by contributing to the project, or reporting bugs. Even voicing your suggestions for features is great. Anything to help is much appreciated.
+
+BTC: 1NyEZSdXfNGEbfaavU3q3UWqactaFqokBK
+LTC: LcXPtFyunDvjLFWC4Jp4A8gBMFHcyycqZF
+DOGE: DGVFwAAmhW13W542cjpSxEx2v6gkdEBQnr
