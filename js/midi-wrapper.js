@@ -184,6 +184,8 @@ function log(str, backgroundColor){
 */
 
 var note_frequencies = null;
+var note_volScale = null;
+
 var midiEvents = [
   0x80, //Note off
   0x90, //Note on
@@ -257,6 +259,16 @@ var sampleKey = function(buffer, homeKey, loopStart, loopEnd){
   this.loopEnd = loopEnd;
 };
 
+//generates a volume table with note_volScale[n-1] == endVal
+//offs is a horizontal shift of the function
+function generateVolScale(endVal, offs, num){
+  var scalar = Math.sqrt(1 / endVal - 1);
+
+  for(var i = 0; i < num; i++){
+    note_volScale[i] = 1 / (1 + Math.pow(scalar * (i + offs) / (num + offs), 2));
+  }
+}
+
 class MidiHandler {
   constructor(audioEngine) {
     //this.channels = [];
@@ -282,13 +294,18 @@ class MidiHandler {
     this.gain.connect(audioEngine.getDestination());
 
     if(!note_frequencies){
-      note_frequencies = [128];
+      note_frequencies = [];
 
       var a = 440;
       for (var x = 0; x < 128; ++x)
       {
          note_frequencies[x] = (a / 32) * Math.pow(2, (x - 9) / 12);
       }
+    }
+
+    if(!note_volScale){
+      note_volScale = [];
+      generateVolScale(.4, 0, 128);
     }
 
     this.audioSample = null;
@@ -746,7 +763,7 @@ class MidiHandler {
 
       note.playing = true;
       note.note = key;
-      note.velocity = velocity / 127;
+      note.velocity = velocity / 127 * note_volScale[key]; //apply pitch based volume scaling
       note.track = track;
       note.channel = channel;
       note.startTime = time;
