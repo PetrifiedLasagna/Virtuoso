@@ -1,3 +1,6 @@
+**Beta 0.4.7**
+- Pitch based volume scaling... nuff said
+
 **Beta 0.4.6**
 - Added play/stop buttons
 - Added time slider
