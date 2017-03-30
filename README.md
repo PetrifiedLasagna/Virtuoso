@@ -4,7 +4,7 @@ With virtuoso your computer can help you learn your favorite songs on piano for 
 
 ## **Version Information**
 
-**Current Version:** 0.4.6 Beta
+**Current Version:** 0.4.7 Beta
 
 Live Demo: http://notebookinc.byethost15.com/js/virtuoso/virtuoso.html
 
