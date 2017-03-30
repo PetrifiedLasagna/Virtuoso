@@ -231,8 +231,10 @@ function draw(){
     var d = Math.max(0, Math.min(objTime.max, t - playStart) );
     objTime.value = d;
     objTimeText.value = Math.floor(d / 60).toString() + ":" + Math.round(d - Math.floor(d / 60) * 60).toString();
-    if(midiController.realTime - t < 4 || midiController.realTime < t){
-      midiController.playCallback(Math.abs(midiController.realTime - t));
+
+    var lA = (isActive == true ? 4 : 8); //focus based look ahead
+    if(midiController.realTime - t < lA){
+      midiController.playCallback(lA - (midiController.realTime - t));
     }
   }
 }
