@@ -1,3 +1,6 @@
+**Beta 0.4.8**
+- Fixed inactive tab bug, now you can do other junk while listening
+
 **Beta 0.4.7**
 - Pitch based volume scaling... nuff said
 
