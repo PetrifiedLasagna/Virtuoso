@@ -31,6 +31,8 @@ var keymap;
 
 var playStart;
 
+var isActive;
+
 function getKey(value){
   return keys[keymap[value].location];
 }
@@ -207,20 +209,24 @@ function update(time){
 function draw(){
   //gfxController.setDrawMode("source-over");
   //gfxController.fillRect(0, 0, gfxController.width, gfxController.height, tRGB(0, 0, 0));
-  gfxController.clearRect(0, 0, gfxController.width, gfxController.height - key0Height - 1);
   var t = audioController.getTime();
-  update(t);
-  newDrawNotes(t);
+  if(isActive){
+    gfxController.clearRect(0, 0, gfxController.width, gfxController.height - key0Height - 1);
+    update(t);
+    newDrawNotes(t);
 
-  for(var i = 0; i < keys.length; i++){
-    var tmpkey = keys[i];
-    gfxController.fillRect(tmpkey.x, tmpkey.y, tmpkey.width, tmpkey.height, tmpkey.color);
-    gfxController.drawRect(tmpkey.x, tmpkey.y, tmpkey.width, tmpkey.height, tRGB(0, 0, 0));
+    for(var i = 0; i < keys.length; i++){
+      var tmpkey = keys[i];
+      gfxController.fillRect(tmpkey.x, tmpkey.y, tmpkey.width, tmpkey.height, tmpkey.color);
+      gfxController.drawRect(tmpkey.x, tmpkey.y, tmpkey.width, tmpkey.height, tRGB(0, 0, 0));
+    }
+
+    //gfxController.putImage(gfxGradient, 0, 0);
+    gfxController.swapBuffers();
+    requestAnimationFrame(draw);
+  } else {
+    setTimeout(draw, 1000); //minimum for most browsers is 1s when not focused
   }
-
-  //gfxController.putImage(gfxGradient, 0, 0);
-  gfxController.swapBuffers();
-  requestAnimationFrame(draw);
   if(midiController.playing){
     var d = Math.max(0, Math.min(objTime.max, t - playStart) );
     objTime.value = d;
@@ -485,6 +491,17 @@ function initColors(){
 }
 
 function init(){
+  isActive = true;
+  window.onfocus = function(e){
+    e.stopPropagation();
+    isActive = true;
+  };
+
+  window.onblur = function(e){
+    e.stopPropagation();
+    isActive = false;
+  };
+
   objDialogContainer = document.createElement("div");
   objDialogContainer.style.visibility = "hidden";
   objDialogContainer.className = "dialogueContainer";
