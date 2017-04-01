@@ -344,7 +344,7 @@ function initDOM(){
   objPedal = document.getElementById("pedal");
 
   objPlaybtn.onclick = function() {
-    if(midiController.playing == false){
+    if(midiController.playing == false && midiController.currentMidi !== null){
       midiController.play(2);
       var d = midiController.usableEvents[midiController.songPointer].timeCode;
       playStart = audioController.getTime() - d + 2;

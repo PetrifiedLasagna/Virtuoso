@@ -356,6 +356,7 @@ class MidiHandler {
   loadMidi(file){
     this.currentTime = 0;
     this.usableEvents = null;
+    this.currentMidi = null;
     this.clearBuffers();
     this.resetInfo();
 
@@ -507,8 +508,10 @@ class MidiHandler {
       }
     }
 
-    this.currentMidi = midi;
-    this.parseEvents(midi);
+    if(ret === ""){
+      this.currentMidi = midi;
+      this.parseEvents(midi);
+    }
 
     return ret;
   }
