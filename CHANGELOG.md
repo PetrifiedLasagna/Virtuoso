@@ -1,3 +1,7 @@
+**Beta 0.4.11**
+- sound engine tweaks
+- fixed crash if loaded midi was invalid and attempted to be played
+
 **Beta 0.4.8**
 - Fixed inactive tab bug, now you can do other junk while listening
 
