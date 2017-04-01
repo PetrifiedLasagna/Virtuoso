@@ -305,7 +305,7 @@ class MidiHandler {
 
     if(!note_volScale){
       note_volScale = [];
-      generateVolScale(.4, 0, 128);
+      generateVolScale(.15, 0, 128);
     }
 
     this.audioSample = null;
@@ -918,14 +918,16 @@ class MidiHandler {
       if(note){
         var vol = note.gain.gain.value;
         if(vol > 0 && note.startTime <= this.engine.getTime()){
-          var strength = (this.info.pedal || note.endTime > this.engine.getTime()) ? 1.5 : 6; //falloff strength
+          var strength = (this.info.pedal || note.endTime > this.engine.getTime()) ? .57 : 8; //falloff strength
           //vol = Math.max(0.0, vol - Math.sqrt(d * strength * vol)); //exponential falloff, sqrt because values <= 1
           //vol = Math.max(0.0, note.velocity / (1 + Math.pow(note.startTime )))
           vol = vol * Math.pow(Math.E, strength * -d); //Real exponential falloff... stupid me :P
           //console.log(this.playing, this.engine.getTime());
-          if(vol < .01) vol = 0;
+          if(vol < .001) {
+            vol = 0;
+          }
           note.gain.gain.value = vol;
-          if(vol < .01 && note.endTime != -1 && note.endTime < this.engine.getTime()){
+          if(vol < .001 && note.endTime < this.engine.getTime()){
             note.oscillator.stop();
           }
         }
