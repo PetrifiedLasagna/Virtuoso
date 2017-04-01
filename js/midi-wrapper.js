@@ -965,5 +965,6 @@ class MidiHandler {
     this.tempoChange(500000);
     this.keyChange(0, 0);
     this.timeChange(4, 4);
+    this.pedalChange(false);
   }
 }
