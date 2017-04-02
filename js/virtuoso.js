@@ -128,7 +128,7 @@ function newDrawNotes(time){
       if(i == 0){
         groups.push(new Array());
         if(colorMode){
-          groups[groups.length - 1].push({col: sorts[i].track, x: xPos, y: yPos, w: width, h: height});
+          groups[groups.length - 1].push({col: sorts[i].track % usableColors.length, x: xPos, y: yPos, w: width, h: height});
         } else {
           groups[groups.length - 1].push({col: sorts[i].channel, x: xPos, y: yPos, w: width, h: height});
         }
@@ -152,6 +152,14 @@ function newDrawNotes(time){
   for(var g = 0; g < groups.length; g++){
     var indG = groups[g];
     var indC = groups[g][0].col;
+
+    if(usableColors[indC] === undefined){
+      console.log(g)
+      console.log(groups);
+      console.log(indG);
+      console.log(usableColors);
+      console.log(indC);
+    }
 
     gfxController.setFillStyle(usableColors[indC][1]);
     gfxController.startBuffering();
@@ -477,6 +485,12 @@ function initColors(){
     tRGB(248, 16, 171), //Pink
     tRGB(202, 16, 248), //Light Purple
     tRGB(16, 194, 248), //Teal
+    tRGB(138, 69, 0), //brown
+    tRGB(0, 0, 102), //navy blue
+    tRGB(177, 236, 0), //chartreuse
+    tRGB(130, 74, 130), //muave a.k.a. grayish Purple
+    tRGB(102, 153, 153), //storm gray/blue
+    tRGB(240, 153, 66), //tannish peach
     tRGB(200,200,200), //Light Gray
     tRGB(100,100,100) //Dark Gray
   ];
