@@ -1,3 +1,7 @@
+**Beta 0.4.15**
+- Added more colors
+- More bug fixes (talk about an infestation)
+
 **Beta 0.4.12**
 - The best falloff function that matches the data collected
 
