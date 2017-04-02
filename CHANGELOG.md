@@ -1,3 +1,6 @@
+**Beta 0.4.12**
+- The best falloff function that matches the data collected
+
 **Beta 0.4.11**
 - sound engine tweaks
 - fixed crash if loaded midi was invalid and attempted to be played
