@@ -502,6 +502,7 @@ function init(){
   window.onblur = function(e){
     e.stopPropagation();
     isActive = false;
+    draw();
   };
 
   objDialogContainer = document.createElement("div");
