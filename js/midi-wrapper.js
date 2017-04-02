@@ -930,7 +930,7 @@ class MidiHandler {
             vol = 0;
           }
           note.gain.gain.value = vol;
-          if(vol < .001 && note.endTime < this.engine.getTime()){
+          if(vol < .001 && note.endTime != -1 && note.endTime < this.engine.getTime()){
             note.oscillator.stop();
           }
         }
